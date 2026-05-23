@@ -1,175 +1,452 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tareas Tienda</title>
-  
-  <!-- DISEÑO INTEGRADO (Garantiza que se vea bien siempre sin depender de servidores externos) -->
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
-    body { bg-color: #f3f4f6; background-color: #f3f4f6; padding: 0; min-height: screen; }
-    .app-container { max-w: 28rem; max-width: 440px; margin: 0 auto; background: white; min-height: 100vh; display: flex; flex-direction: column; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); position: relative; }
-    
-    header { background-color: #2563eb; color: white; padding: 20px; border-bottom-left-radius: 16px; border-bottom-right-radius: 16px; position: sticky; top: 0; z-index: 10; }
-    .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-    .header-title { font-size: 1.25rem; font-weight: bold; }
-    
-    .btn-nueva { background: white; color: #2563eb; font-weight: bold; border: none; padding: 6px 12px; border-radius: 8px; font-size: 0.75rem; cursor: pointer; }
-    .select-user { margin-top: 4px; background: #1d4ed8; color: white; font-size: 0.75rem; padding: 4px; border-radius: 6px; border: 1px solid #3b82f6; width: 100%; max-width: 180px; }
-    
-    .stats-panel { background: rgba(29, 78, 216, 0.4); padding: 12px; border-radius: 12px; border: 1px solid rgba(59, 130, 246, 0.3); margin-bottom: 16px; }
-    .stats-label { display: flex; justify-content: space-between; font-size: 0.75rem; font-weight: bold; margin-bottom: 6px; }
-    .progress-bar-bg { w-full; background: rgba(30, 58, 138, 0.4); border-radius: 9999px; h-2.5; height: 10px; overflow: hidden; }
-    .progress-bar-fill { background: #4ade80; height: 100%; width: 0%; transition: width 0.4s ease; }
-    .stats-counters { display: flex; justify-content: space-between; font-size: 0.75rem; margin-top: 6px; color: #bfdbfe; }
-    
-    .tabs-container { display: flex; gap: 8px; background: rgba(29, 78, 216, 0.5); padding: 4px; border-radius: 8px; }
-    .tab-btn { flex: 1; padding: 8px; text-align: center; font-size: 0.75rem; font-weight: font-semibold; border-radius: 6px; border: none; cursor: pointer; transition: all 0.2s; }
-    .tab-active { background: white; color: #2563eb; font-weight: bold; }
-    .tab-inactive { background: transparent; color: #dbeafe; }
-    
-    .form-container { background: #f9fafb; border-bottom: 1px solid #e5e7eb; padding: 20px; display: flex; flex-direction: column; gap: 12px; }
-    .form-container.hidden { display: none; }
-    .form-title { font-size: 0.875rem; font-weight: bold; text-transform: uppercase; color: #374151; }
-    .input-text { width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 0.875rem; }
-    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-    .btn-row { display: flex; gap: 8px; margin-top: 8px; }
-    .btn-submit { flex: 1; padding: 10px; background: #2563eb; color: white; border: none; font-size: 0.75rem; font-weight: bold; border-radius: 8px; cursor: pointer; }
-    .btn-cancel { flex: 1; padding: 10px; background: #e5e7eb; color: #374151; border: none; font-size: 0.75rem; font-weight: bold; border-radius: 8px; cursor: pointer; }
-    
-    main { padding: 16px; display: flex; flex-direction: column; gap: 12px; flex: 1; overflow-y: auto; }
-    .task-card { background: white; padding: 16px; border-radius: 12px; border-left: 5px solid #d1d5db; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.05); border-top: 1px solid #f3f4f6; border-right: 1px solid #f3f4f6; border-bottom: 1px solid #f3f4f6; }
-    .border-alta { border-left-color: #ef4444; }
-    .border-media { border-left-color: #f59e0b; }
-    .border-baja { border-left-color: #10b981; }
-    
-    .tag-container { display: flex; gap: 6px; align-items: center; margin-bottom: 4px; }
-    .tag-area { font-size: 0.65rem; font-weight: bold; color: #9ca3af; text-transform: uppercase; }
-    .tag-freq { font-size: 0.6rem; font-weight: bold; background: #f3f4f6; color: #4b5563; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; }
-    .task-title { font-size: 0.95rem; font-weight: 600; color: #1f2937; }
-    .task-title.completed { text-decoration: line-through; color: #9ca3af; }
-    .task-limit { font-size: 0.7rem; color: #6b7280; margin-top: 4px; }
-    
-    .btn-check { width: 36px; height: 36px; border-radius: 9999px; border: 2px solid #e5e7eb; background: white; color: #d1d5db; font-weight: bold; font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
-    .btn-check.completed { background: #22c55e; border-color: #22c55e; color: white; }
-    .no-tasks { text-align: center; color: #9ca3af; font-size: 0.75rem; margin-top: 32px; }
-  </style>
-</head>
-<body>
+import React, { useEffect, useMemo, useState } from "react";
+import { Bell, CheckCircle2, ClipboardList, User } from "lucide-react";
 
-  <div class="app-container">
-    
-    <!-- ENCABEZADO -->
-    <header>
-      <div class="header-top">
-        <div>
-          <h1 class="header-title">Mis Actividades</h1>
-          <select id="sesión-colaborador" onchange="cambiarUsuario()" class="select-user">
-          </select>
-        </div>
-        <button onclick="toggleFormulario()" class="btn-nueva">+ Asignar Tarea</button>
-      </div>
+export default function SeguimientoDigitalTienda() {
+  const auxiliares = [
+    {
+      nombre: "Auxiliar 1",
+      areas: [
+        "Gaseosas",
+        "Jugos",
+        "Agua",
+        "Alternativas 1",
+        "Botanas 1",
+        "Semillas"
+      ]
+    },
+    {
+      nombre: "Auxiliar 2",
+      areas: [
+        "Sopas",
+        "Check Out",
+        "Bomboneras",
+        "Desayunos",
+        "Botanas 2",
+        "HYH"
+      ]
+    },
+    {
+      nombre: "Auxiliar 3",
+      areas: [
+        "Abarrotes",
+        "Galletas",
+        "Repostería",
+        "Dulces",
+        "Botanas 3"
+      ]
+    },
+    {
+      nombre: "Auxiliar 4",
+      areas: [
+        "Alternativas 2",
+        "Colombina",
+        "Cream Helado",
+        "Koska",
+        "Brikets + Cueros + SIM Card"
+      ]
+    }
+  ];
 
-      <!-- PANEL DE MÉTRICAS -->
-      <div class="stats-panel">
-        <div class="stats-label">
-          <span>PROGRESO DEL DÍA</span>
-          <span id="txt-porcentaje">0%</span>
-        </div>
-        <div class="progress-bar-bg">
-          <div id="barra-progreso" class="progress-bar-fill"></div>
-        </div>
-        <div class="stats-counters">
-          <span>Pendientes: <strong id="resumen-pendientes" style="color:white;">0</strong></span>
-          <span>Completadas: <strong id="resumen-completadas" style="color:white;">0</strong></span>
-        </div>
-      </div>
-      
-      <!-- PESTAÑAS -->
-      <div class="tabs-container">
-        <button onclick="filtrarTareas('pendientes')" id="btn-pendientes" class="tab-btn tab-active">Por Hacer</button>
-        <button onclick="filtrarTareas('completadas')" id="btn-completadas" class="tab-btn tab-inactive">Historial</button>
-      </div>
-    </header>
+  const actividades = [
+    "Inventario",
+    "Limpieza",
+    "Etiquetado",
+    "Surtido"
+  ];
 
-    <!-- FORMULARIO -->
-    <div id="formulario-tarea" class="form-container hidden">
-      <h2 class="form-title">Asignar Nueva Tarea</h2>
-      <input type="text" id="nueva-titulo" placeholder="Ej: Sacar la basura del almacén" class="input-text">
-      
-      <div>
-        <label style="font-size: 10px; font-weight: bold; color: #6b7280; display: block; margin-bottom: 4px;">RESPONSABLE:</label>
-        <select id="nueva-colaborador" class="input-text"></select>
-      </div>
-      
-      <div class="grid-2">
-        <select id="nueva-area" class="input-text">
-          <option value="Caja">Caja</option>
-          <option value="Almacén">Almacén</option>
-          <option value="Piso">Piso de Venta</option>
-        </select>
-        <select id="nueva-prioridad" class="input-text">
-          <option value="baja">Prioridad Baja</option>
-          <option value="media">Prioridad Media</option>
-          <option value="alta">Prioridad Alta</option>
-        </select>
-      </div>
-      
-      <div class="grid-2">
-        <select id="nueva-frecuencia" class="input-text">
-          <option value="Única">Solo una vez</option>
-          <option value="Diaria">Cada día</option>
-          <option value="Semanal">Cada semana</option>
-          <option value="Mensual">Cada mes</option>
-        </select>
-        <input type="text" id="nueva-limite" placeholder="Ej: 14:00 PM" class="input-text">
-      </div>
-      
-      <div class="btn-row">
-        <button onclick="toggleFormulario()" class="btn-cancel">Cancelar</button>
-        <button onclick="agregarTarea()" class="btn-submit">Guardar</button>
+  const [registros, setRegistros] = useState([]);
+  const [notificaciones, setNotificaciones] = useState([]);
+  const [informesSemanales, setInformesSemanales] = useState([]);
+
+  useEffect(() => {
+    const hoy = new Date();
+    const esLunes = hoy.getDay() === 1;
+
+    if (esLunes) {
+      const informe = auxiliares.map((auxiliar) => {
+        const actividadesTotales = auxiliar.areas.length * actividades.length;
+
+        const realizadas = registros.filter(
+          (r) => r.auxiliar === auxiliar.nombre
+        ).length;
+
+        const pendientes = actividadesTotales - realizadas;
+
+        return {
+          auxiliar: auxiliar.nombre,
+          realizadas,
+          pendientes,
+          total: actividadesTotales
+        };
+      });
+
+      if (registros.length > 0) {
+        setInformesSemanales((prev) => [
+          {
+            fecha: hoy.toLocaleDateString(),
+            detalle: informe,
+            id: Date.now()
+          },
+          ...prev
+        ]);
+      }
+
+      setRegistros([]);
+
+      setNotificaciones([
+        {
+          mensaje:
+            "🔄 Reinicio semanal realizado. Las actividades fueron desbloqueadas.",
+          fecha: hoy.toLocaleDateString(),
+          hora: hoy.toLocaleTimeString(),
+          id: Date.now()
+        }
+      ]);
+    }
+  }, []);
+
+  const marcarActividad = (auxiliar, area, actividad) => {
+    const hora = new Date().toLocaleTimeString();
+    const fecha = new Date().toLocaleDateString();
+
+    const nuevoRegistro = {
+      auxiliar,
+      area,
+      actividad,
+      fecha,
+      hora,
+      id: Date.now()
+    };
+
+    setRegistros((prev) => [...prev, nuevoRegistro]);
+
+    setNotificaciones((prev) => [
+      {
+        mensaje: ${auxiliar} realizó ${actividad} en ${area},
+        fecha,
+        hora,
+        id: Date.now() + Math.random()
+      },
+      ...prev
+    ]);
+  };
+
+  const totalActividades = registros.length;
+
+  const resumenAuxiliares = useMemo(() => {
+    return auxiliares.map((auxiliar) => {
+      const realizadas = registros.filter(
+        (r) => r.auxiliar === auxiliar.nombre
+      ).length;
+
+      return {
+        nombre: auxiliar.nombre,
+        realizadas
+      };
+    });
+  }, [registros]);
+
+  return (
+    <div className="min-h-screen bg-slate-100 p-6">
+      <div className="max-w-7xl mx-auto">
+        <div className="grid lg:grid-cols-3 gap-6 mb-8">
+          <div className="bg-white rounded-3xl shadow-lg p-6">
+            <div className="flex items-center gap-4 mb-4">
+              <div className="bg-blue-100 p-3 rounded-2xl">
+                <ClipboardList className="w-8 h-8 text-blue-700" />
+              </div>
+
+              <div>
+                <h2 className="text-2xl font-bold text-slate-800">
+                  Seguimiento Digital
+                </h2>
+                <p className="text-slate-500 text-sm">
+                  Control de actividades en tienda
+                </p>
+
+                <p className="text-xs text-blue-600 mt-1 font-medium">
+                  Reinicio automático cada lunes
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-slate-100 rounded-2xl p-4 mt-4">
+              <p className="text-slate-500 text-sm">
+                Actividades Registradas
+              </p>
+
+              <p className="text-4xl font-bold text-slate-800 mt-2">
+                {totalActividades}
+              </p>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-3xl shadow-lg p-6 lg:col-span-2">
+            <div className="flex items-center gap-3 mb-5">
+              <Bell className="w-7 h-7 text-amber-500" />
+
+              <h2 className="text-2xl font-bold text-slate-800">
+                Notificaciones Supervisor
+              </h2>
+            </div>
+
+            <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
+              {notificaciones.length === 0 ? (
+                <div className="bg-slate-100 rounded-2xl p-4 text-slate-500 text-sm">
+                  Aún no hay actividades registradas.
+                </div>
+              ) : (
+                notificaciones.map((item) => (
+                  <div
+                    key={item.id}
+                    className="bg-amber-50 border border-amber-100 rounded-2xl p-4"
+                  >
+                    <p className="font-semibold text-slate-700">
+                      🔔 {item.mensaje}
+                    </p>
+
+                    <p className="text-sm text-slate-500 mt-1">
+                      {item.fecha} • {item.hora}
+                    </p>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="grid lg:grid-cols-4 gap-6 mb-8">
+          {resumenAuxiliares.map((auxiliar) => (
+            <div
+              key={auxiliar.nombre}
+              className="bg-white rounded-3xl shadow-lg p-5"
+            >
+              <div className="flex items-center gap-3 mb-3">
+                <div className="bg-green-100 p-2 rounded-xl">
+                  <User className="w-5 h-5 text-green-700" />
+                </div>
+
+                <h3 className="font-bold text-slate-700">
+                  {auxiliar.nombre}
+                </h3>
+              </div>
+
+              <p className="text-sm text-slate-500">
+                Actividades completadas
+              </p>
+
+              <p className="text-3xl font-bold text-slate-800 mt-2">
+                {auxiliar.realizadas}
+              </p>
+            </div>
+          ))}
+        </div>
+
+        <div className="space-y-8">
+          {auxiliares.map((auxiliar) => (
+            <div
+              key={auxiliar.nombre}
+              className="bg-white rounded-3xl shadow-xl overflow-hidden"
+            >
+              <div className="bg-slate-800 text-white px-6 py-5">
+                <h2 className="text-2xl font-bold">
+                  👤 {auxiliar.nombre}
+                </h2>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse text-sm">
+                  <thead>
+                    <tr className="bg-slate-100 text-slate-700">
+                      <th className="border p-4 text-left">Área</th>
+                      {actividades.map((actividad) => (
+                        <th
+                          key={actividad}
+                          className="border p-4 text-center"
+                        >
+                          {actividad}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    {auxiliar.areas.map((area) => (
+                      <tr key={area} className="hover:bg-slate-50">
+                        <td className="border p-4 font-semibold text-slate-700">
+                          {area}
+                        </td>
+
+                        {actividades.map((actividad) => {
+                          const completada = registros.some(
+                            (r) =>
+                              r.auxiliar === auxiliar.nombre &&
+                              r.area === area &&
+                              r.actividad === actividad
+                          );
+
+                          return (
+                            <td
+                              key={actividad}
+                              className="border p-4 text-center"
+                            >
+                              <button
+                                onClick={() =>
+                                  marcarActividad(
+                                    auxiliar.nombre,
+                                    area,
+                                    actividad
+                                  )
+                                }
+                                disabled={completada}
+                                className={`px-4 py-2 rounded-xl font-semibold transition-all ${
+                                  completada
+                                    ? "bg-green-100 text-green-700 cursor-not-allowed"
+                                    : "bg-blue-600 hover:bg-blue-700 text-white"
+                                }`}
+                              >
+                                {completada ? (
+                                  <span className="flex items-center justify-center gap-2">
+                                    <CheckCircle2 className="w-4 h-4" />
+                                    Hecho
+                                  </span>
+                                ) : (
+                                  "Marcar"
+                                )}
+                              </button>
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="bg-white rounded-3xl shadow-lg p-6 mt-10">
+          <h2 className="text-2xl font-bold text-slate-800 mb-5">
+            📊 Informes Semanales
+          </h2>
+
+          {informesSemanales.length === 0 ? (
+            <div className="bg-slate-100 rounded-2xl p-5 text-slate-500 mb-8">
+              Aún no hay informes generados.
+            </div>
+          ) : (
+            <div className="space-y-6 mb-10">
+              {informesSemanales.map((informe) => (
+                <div
+                  key={informe.id}
+                  className="border border-slate-200 rounded-2xl overflow-hidden"
+                >
+                  <div className="bg-slate-800 text-white px-5 py-4 flex justify-between items-center">
+                    <h3 className="text-xl font-bold">
+                      Informe Semanal
+                    </h3>
+
+                    <span className="text-sm">{informe.fecha}</span>
+                  </div>
+
+                  <div className="overflow-x-auto">
+                    <table className="w-full border-collapse text-sm">
+                      <thead>
+                        <tr className="bg-slate-100">
+                          <th className="border p-3">Auxiliar</th>
+                          <th className="border p-3">
+                            Actividades Cumplidas
+                          </th>
+                          <th className="border p-3">
+                            Actividades Pendientes
+                          </th>
+                          <th className="border p-3">Total</th>
+                        </tr>
+                      </thead>
+
+                      <tbody>
+                        {informe.detalle.map((item) => (
+                          <tr key={item.auxiliar}>
+                            <td className="border p-3 font-medium">
+                              {item.auxiliar}
+                            </td>
+
+                            <td className="border p-3 text-center text-green-700 font-bold">
+                              {item.realizadas}
+                            </td>
+
+                            <td className="border p-3 text-center text-red-600 font-bold">
+                              {item.pendientes}
+                            </td>
+
+                            <td className="border p-3 text-center">
+                              {item.total}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="bg-white rounded-3xl shadow-lg p-6 mt-10">
+          <h2 className="text-2xl font-bold text-slate-800 mb-5">
+            📋 Historial de Actividades
+          </h2>
+
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse text-sm">
+              <thead>
+                <tr className="bg-slate-100 text-slate-700">
+                  <th className="border p-3">Auxiliar</th>
+                  <th className="border p-3">Área</th>
+                  <th className="border p-3">Actividad</th>
+                  <th className="border p-3">Fecha</th>
+                  <th className="border p-3">Hora</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {registros.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={5}
+                      className="border p-6 text-center text-slate-500"
+                    >
+                      No hay actividades registradas.
+                    </td>
+                  </tr>
+                ) : (
+                  registros.map((registro) => (
+                    <tr key={registro.id}>
+                      <td className="border p-3">
+                        {registro.auxiliar}
+                      </td>
+
+                      <td className="border p-3">{registro.area}</td>
+
+                      <td className="border p-3">
+                        {registro.actividad}
+                      </td>
+
+                      <td className="border p-3">
+                        {registro.fecha}
+                      </td>
+
+                      <td className="border p-3">{registro.hora}</td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </div>
-
-    <!-- LISTA DE TAREAS -->
-    <main id="contenedor-tareas"></main>
-
-  </div>
-
-  <script>
-    const colaboradores = ["Carlos Gómez", "Ana Martínez", "Luis Rodríguez", "Sofía Peña"];
-    
-    let tareas = JSON.parse(localStorage.getItem('tareas_tienda')) || [
-      { id: 1, titulo: "Arqueo de caja matutino", area: "Caja", limite: "10:30 AM", prioridad: "alta", frecuencia: "Diaria", colaborador: "Carlos Gómez", completada: false },
-      { id: 2, titulo: "Reponer stock central", area: "Almacén", limite: "12:00 PM", prioridad: "media", frecuencia: "Semanal", colaborador: "Ana Martínez", completada: false },
-      { id: 3, titulo: "Organizar vitrina exterior", area: "Piso", limite: "04:00 PM", prioridad: "baja", frecuencia: "Única", colaborador: "Carlos Gómez", completada: false }
-    ];
-
-    let filtroEstado = 'pendientes';
-    let usuarioActivo = colaboradores[0];
-
-    function inicializar() {
-      document.getElementById('sesión-colaborador').innerHTML = colaboradores.map(c => <option value="${c}">👤 Ver como: ${c}</option>).join('');
-      document.getElementById('nueva-colaborador').innerHTML = colaboradores.map(c => <option value="${c}">${c}</option>).join('');
-      renderizar();
-    }
-
-    function cambiarUsuario() {
-      usuarioActivo = document.getElementById('sesión-colaborador').value;
-      renderizar();
-    }
-
-    function renderizar() {
-      const contenedor = document.getElementById('contenedor-tareas');
-      contenedor.innerHTML = '';
-
-      const tareasDelUsuario = tareas.filter(t => t.colaborador === usuarioActivo);
-      
-      const total = tareasDelUsuario.length;
-      const completadas = tareasDelUsuario.filter(t => t.completada).length;
-      const porcentaje = total > 0 ? Math.round((completadas / total) * 100) : 0;
-
-      document.getElementById('txt-porcentaje').innerText = porcentaje + '%';
-      document.getElementById('resumen-pendientes').innerText = total - completadas;
-      document.getElementById('resumen-completadas').innerText = completadas;document.getElementById('barra-progreso').style.width = porcentaje + '%';const filtradas = tareasDelUsuario.filter(t => filtroEstado === 'completadas' ? t.completada : !t.completada);if (filtradas.length === 0) {contenedor.innerHTML = 'No hay tareas en esta sección.';return;}filtradas.forEach(tarea => {let borderClass = 'border-media';if (tarea.prioridad === 'alta') borderClass = 'border-alta';if (tarea.prioridad === 'baja') borderClass = 'border-baja';let checkClass = tarea.completada ? 'completed' : '';contenedor.innerHTML +=  <div class="task-card ${borderClass}"> <div> <div class="tag-container"> <span class="tag-area">${tarea.area}</span> <span class="tag-freq">${tarea.frecuencia}</span> </div> <h3 class="task-title ${tarea.completada ? 'completed' : ''}">${tarea.titulo}</h3> <p class="task-limit">⏱️ Límite: ${tarea.limite}</p> </div> <button onclick="alternar(${tarea.id})" class="btn-check ${checkClass}">✓</button> </div>;});}function alternar(id) {const t = tareas.find(t => t.id === id);if (t) t.completada = !t.completada;guardar();}function agregarTarea() {const titulo = document.getElementById('nueva-titulo').value;if (!titulo.trim()) return alert('Escribe la tarea');tareas.unshift({id: Date.now(),titulo: titulo,colaborador: document.getElementById('nueva-colaborador').value,area: document.getElementById('nueva-area').value,prioridad: document.getElementById('nueva-prioridad').value,frecuencia: document.getElementById('nueva-frecuencia').value,limite: document.getElementById('nueva-limite').value || 'Sin límite',completada: false});document.getElementById('nueva-titulo').value = '';toggleFormulario();guardar();}function guardar() {localStorage.setItem('tareas_tienda', JSON.stringify(tareas));renderizar();}function toggleFormulario() {document.getElementById('formulario-tarea').classList.toggle('hidden');}function filtrarTareas(f) {filtroEstado = f;document.getElementById('btn-pendientes').className = f === 'pendientes' ? "tab-btn tab-active" : "tab-btn tab-inactive";document.getElementById('btn-completadas').className = f === 'completadas' ? "tab-btn tab-active" : "tab-btn tab-inactive";renderizar();}inicializar();
+  );
+}
