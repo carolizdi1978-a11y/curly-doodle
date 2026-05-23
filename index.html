@@ -3,22 +3,19 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tareas Tienda Cloud</title>
- <!-- 1. Herramienta para los diseños y colores -->
+  <title>Tareas Tienda</title>
   <script src="https://tailwindcss.com"></script>
-  <!-- 2. Herramienta para conectar con internet y Supabase -->
-  <script src="https://jsdelivr.net"></script>
 </head>
+<body class="bg-gray-100 min-h-screen font-sans antialiased text-gray-800">
 
   <div class="max-w-md mx-auto bg-white min-h-screen shadow-md flex flex-col relative">
     
-    <!-- ENCABEZADO Y MÉTRICAS -->
+    <!-- ENCABEZADO Y ESTADÍSTICAS -->
     <header class="bg-blue-600 text-white p-5 rounded-b-2xl shadow-sm sticky top-0 z-10 space-y-4">
       <div class="flex justify-between items-center">
         <div>
           <h1 class="text-xl font-bold tracking-tight">Mis Actividades</h1>
           <select id="sesión-colaborador" onchange="cambiarUsuario()" class="mt-1 bg-blue-700 text-white text-xs font-semibold py-1 px-2 rounded-md border border-blue-500 focus:outline-none cursor-pointer">
-            <option value="">Cargando usuarios...</option>
           </select>
         </div>
         <button onclick="toggleFormulario()" class="bg-white text-blue-600 hover:bg-blue-50 font-bold px-3 py-1.5 rounded-xl text-xs shadow-xs cursor-pointer active:scale-95 transition-all">
@@ -50,7 +47,7 @@
       </div>
     </header>
 
-    <!-- FORMULARIO -->
+    <!-- FORMULARIO NUEVA TAREA -->
     <div id="formulario-tarea" class="hidden bg-gray-50 border-b border-gray-200 p-5 space-y-3">
       <h2 class="text-sm font-bold text-gray-700 uppercase tracking-wide">Asignar Nueva Tarea</h2>
       <input type="text" id="nueva-titulo" placeholder="Ej: Sacar la basura del almacén" class="w-full p-2.5 border border-gray-300 rounded-lg text-sm bg-white focus:outline-blue-500">
@@ -85,92 +82,63 @@
       </div>
     </div>
 
-    <!-- LISTA DE TAREAS REALES -->
-    <main class="p-4 flex-1 overflow-y-auto space-y-3" id="contenedor-tareas">
-      <p class="text-center text-gray-400 my-8 text-xs font-medium">Conectando con el servidor de la tienda...</p>
-    </main>
+    <!-- LISTA DE TAREAS -->
+    <main class="p-4 flex-1 overflow-y-auto space-y-3" id="contenedor-tareas"></main>
 
   </div>
 
   <script>
-    // CONFIGURACIÓN DE CRIDENCIALES DE TU PROYECTO SUPABASE
-    const SUPABASE_URL = "TU_SUPABASE_URL"; 
-    const SUPABASE_ANON_KEY = "TU_SUPABASE_ANON_KEY";
+    const colaboradores = ["Carlos Gómez", "Ana Martínez", "Luis Rodríguez", "Sofía Peña"];
+    
+    // Cargar datos guardados previamente en el teléfono o usar iniciales
+    let tareas = JSON.parse(localStorage.getItem('tareas_tienda')) || [
+      { id: 1, titulo: "Arqueo de caja matutino", area: "Caja", limite: "10:30 AM", prioridad: "alta", frecuencia: "Diaria", colaborador: "Carlos Gómez", completada: false },
+      { id: 2, titulo: "Reponer stock central", area: "Almacén", limite: "12:00 PM", prioridad: "media", frecuencia: "Semanal", colaborador: "Ana Martínez", completada: false }
+    ];
 
-    const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-    let colaboradores = [];
-    let tareas = [];
     let filtroEstado = 'pendientes';
-    let usuarioActivoId = null;
+    let usuarioActivo = colaboradores[0];
 
-    // Inicializar la App descargando los datos de Internet
-    async function iniciarApp() {
-      // 1. Descargar lista de colaboradores reales
-      let { data: listaColaboradores, error: errC } = await supabase.from('colaboradores').select('*').order('nombre');
-      if (errC) return console.error(errC);
-      
-      colaboradores = listaColaboradores;
-      
-      // 2. Rellenar los elementos select de la interfaz
-      document.getElementById('sesión-colaborador').innerHTML = colaboradores.map(c => `<option value="${c.id}">👤 Ver como: ${c.nombre}</option>`).join('');
-      document.getElementById('nueva-colaborador').innerHTML = colaboradores.map(c => `<option value="${c.id}">${c.nombre}</option>`).join('');
-      
-      if (colaboradores.length > 0) {
-        usuarioActivoId = colaboradores[0].id;
-      }
-      
-      // 3. Descargar todas las tareas guardadas
-      await descargarTareas();
-    }
-
-    async function descargarTareas() {
-      let { data: listaTareas, error: errT } = await supabase.from('tareas').select('*').order('id', { ascending: false });
-      if (errT) return console.error(errT);
-      tareas = listaTareas;
+    function inicializar() {
+      document.getElementById('sesión-colaborador').innerHTML = colaboradores.map(c => `<option value="${c}">👤 Ver como: ${c}</option>`).join('');
+      document.getElementById('nueva-colaborador').innerHTML = colaboradores.map(c => `<option value="${c}">${c}</option>`).join('');
       renderizar();
     }
 
     function cambiarUsuario() {
-      usuarioActivoId = parseInt(document.getElementById('sesión-colaborador').value);
+      usuarioActivo = document.getElementById('sesión-colaborador').value;
       renderizar();
-    }
-
-    function calcularMetricas(tareasUsuario) {
-      const total = tareasUsuario.length;
-      const completadas = tareasUsuario.filter(t => t.completada).length;
-      const pendientes = total - completadas;
-      const porcentaje = total > 0 ? Math.round((completadas / total) * 100) : 0;
-
-      document.getElementById('txt-porcentaje').innerText = `${porcentaje}%`;
-      document.getElementById('resumen-pendientes').innerText = pendientes;
-      document.getElementById('resumen-completadas').innerText = completadas;
-      document.getElementById('barra-progreso').style.width = `${porcentaje}%`;
     }
 
     function renderizar() {
       const contenedor = document.getElementById('contenedor-tareas');
       contenedor.innerHTML = '';
 
-      const tareasDelUsuario = tareas.filter(t => t.colaborador_id === usuarioActivoId);
-      calcularMetricas(tareasDelUsuario);
+      const tareasDelUsuario = tareas.filter(t => t.colaborador === usuarioActivo);
+      
+      // Métricas
+      const total = tareasDelUsuario.length;
+      const completadas = tareasDelUsuario.filter(t => t.completada).length;
+      const porcentaje = total > 0 ? Math.round((completadas / total) * 100) : 0;
 
-      const tareasFiltradas = tareasDelUsuario.filter(t => filtroEstado === 'completadas' ? t.completada : !t.completada);
+      document.getElementById('txt-porcentaje').innerText = `${porcentaje}%`;
+      document.getElementById('resumen-pendientes').innerText = total - completadas;
+      document.getElementById('resumen-completadas').innerText = completadas;
+      document.getElementById('barra-progreso').style.width = `${porcentaje}%`;
 
-      if (tareasFiltradas.length === 0) {
-        contenedor.innerHTML = `<p class="text-center text-gray-400 my-8 text-xs font-medium">No hay tareas registradas en esta sección.</p>`;
+      const filtradas = tareasDelUsuario.filter(t => filtroEstado === 'completadas' ? t.completada : !t.completada);
+
+      if (filtradas.length === 0) {
+        contenedor.innerHTML = `<p class="text-center text-gray-400 my-8 text-xs font-medium">No hay tareas en esta sección.</p>`;
         return;
       }
 
-      tareasFiltradas.forEach(tarea => {
-        let colorBorde = 'border-gray-300';
-        if (tarea.prioridad === 'alta') colorBorde = 'border-red-500';
-        if (tarea.prioridad === 'media') colorBorde = 'border-amber-500';
+      filtradas.forEach(tarea => {
+        let border = tarea.prioridad === 'alta' ? 'border-red-500' : (tarea.prioridad === 'media' ? 'border-amber-500' : 'border-gray-300');
+        let btn = tarea.completada ? 'bg-green-500 text-white border-green-500' : 'bg-white text-gray-300 border-gray-200';
 
-        const btnCheckClass = tarea.completada ? 'bg-green-500 text-white border-green-500' : 'bg-white text-gray-300 border-gray-200';
-
-        const htmlTarea = `
-          <div class="border-l-4 ${colorBorde} bg-white p-4 rounded-xl shadow-xs flex justify-between items-center">
+        contenedor.innerHTML += `
+          <div class="border-l-4 ${border} bg-white p-4 rounded-xl shadow-xs flex justify-between items-center">
             <div>
               <div class="flex items-center gap-1.5">
                 <span class="text-[10px] font-bold text-gray-400 uppercase">${tarea.area}</span>
@@ -179,62 +147,44 @@
               <h3 class="text-sm font-semibold text-gray-800 mt-1 ${tarea.completada ? 'line-through text-gray-400' : ''}">${tarea.titulo}</h3>
               <p class="text-[11px] font-medium text-gray-500 mt-1">⏱️ Límite: ${tarea.limite}</p>
             </div>
-            <button onclick="alternarTarea(${tarea.id}, ${tarea.completada})" class="h-9 w-9 border rounded-full flex items-center justify-center font-bold cursor-pointer transition-all ${btnCheckClass}">
-              ✓
-            </button>
-          </div>
-        `;
-        contenedor.innerHTML += htmlTarea;
+            <button onclick="alternar(${tarea.id})" class="h-9 w-9 border rounded-full flex items-center justify-center font-bold content-center ${btn}">✓</button>
+          </div>`;
       });
     }
 
-    // Actualizar estado de la tarea directamente en el servidor de Internet
-    async function alternarTarea(id, estadoActual) {
-      const { error } = await supabase.from('tareas').update({ completada: !estadoActual }).eq('id', id);
-      if (error) return alert("Error al actualizar tarea en internet");
-      await descargarTareas();
+    function alternar(id) {
+      const t = tareas.find(t => t.id === id);
+      if (t) t.completada = !t.completada;
+      guardar();
     }
 
-    function toggleFormulario() {
-      document.getElementById('formulario-tarea').classList.toggle('hidden');
-    }
-
-    // Guardar una nueva tarea en la base de datos de Internet
-    async function agregarTarea() {
+    function agregarTarea() {
       const titulo = document.getElementById('nueva-titulo').value;
-      const colaborador_id = parseInt(document.getElementById('nueva-colaborador').value);
-      const area = document.getElementById('nueva-area').value;
-      const prioridad = document.getElementById('nueva-prioridad').value;
-      const frecuencia = document.getElementById('nueva-frecuencia').value;
-      const limite = document.getElementById('nueva-limite').value || 'Sin límite';
+      if (!titulo.trim()) return alert('Escribe la tarea');
 
-      if (!titulo.trim()) return alert('Escribe el título de la tarea');
+      tareas.unshift({
+        id: Date.now(),
+        titulo,
+        colaborador: document.getElementById('nueva-colaborador').value,
+        area: document.getElementById('nueva-area').value,
+        prioridad: document.getElementById('nueva-prioridad').value,
+        frecuencia: document.getElementById('nueva-frecuencia').value,
+        limite: document.getElementById('nueva-limite').value || 'Sin límite',
+        completada: false
+      });
 
-      const { error } = await supabase.from('tareas').insert([{ titulo, colaborador_id, area, prioridad, frecuencia, limite }]);
-      if (error) return alert("Error al subir la tarea a internet");
-
-      toggleFormulario();
       document.getElementById('nueva-titulo').value = '';
-      await descargarTareas();
+      toggleFormulario();
+      guardar();
     }
 
-    function filtrarTareas(filtro) {
-      filtroEstado = filtro;
-      const btnP = document.getElementById('btn-pendientes');
-      const btnC = document.getElementById('btn-completadas');
-
-      if (filtro === 'pendientes') {
-        btnP.className = "flex-1 py-2 text-center text-xs font-semibold rounded-lg bg-white text-blue-700 shadow-xs transition-all";
-        btnC.className = "flex-1 py-2 text-center text-xs font-semibold rounded-lg text-blue-100 hover:text-white transition-all";
-      } else {
-        btnC.className = "flex-1 py-2 text-center text-xs font-semibold rounded-lg bg-white text-blue-700 shadow-xs transition-all";
-        btnP.className = "flex-1 py-2 text-center text-xs font-semibold rounded-lg text-blue-100 hover:text-white transition-all";
-      }
+    function guardar() {
+      localStorage.setItem('tareas_tienda', JSON.stringify(tareas));
       renderizar();
     }
 
-    // Arrancar
-    iniciarApp();
-  </script> 
-</body>
-</html>
+    function toggleFormulario() { document.getElementById('formulario-tarea').classList.toggle('hidden'); }
+    
+    function filtrarTareas(f) {
+      filtroEstado = f;
+      document.getElementById('btn-pendientes').className = f === 'pendientes' ? "flex-1 py-2 text-center text-xs font-semibold rounded-lg bg-white text-blue-700 shadow-xs" : "flex-1 py-2 text-center text-xs font-semibold rounded-lg text-blue-100";
