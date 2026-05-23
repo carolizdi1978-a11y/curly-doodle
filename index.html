@@ -135,11 +135,10 @@
     const actividades = ["Inventario", "Limpieza", "Etiquetado", "Surtido"];
     const CLAVE_SUPERVISOR = "1234"; // Define aquí la clave de acceso del Supervisor
 
-    let registros = [];
+       let registros = [];
     let informesSemanales = [];
-    let usuarioLogueado = null; // Guarda quién está usando la app
+    let usuarioLogueado = null;
 
-    // Carga inicial y segura desde la memoria del celular
     try {
       const reg = localStorage.getItem('t_reg_v5'); if (reg) registros = JSON.parse(reg);
       const inf = localStorage.getItem('t_inf_v5'); if (inf) informesSemanales = JSON.parse(inf);
@@ -148,10 +147,9 @@
     function evaluarRolLogin() {
       const usuario = document.getElementById('login-usuario').value;
       const boxPass = document.getElementById('box-password');
-      if (usuario === "Supervisor") {
-        boxPass.classList.remove('hidden');
-      } else {
-        boxPass.classList.add('hidden');
+      if (boxPass) {
+        if (usuario === "Supervisor") boxPass.classList.remove('hidden');
+        else boxPass.classList.add('hidden');
       }
     }
 
@@ -168,8 +166,6 @@
       document.getElementById('view-login').classList.add('hidden');
       document.getElementById('view-app').classList.remove('hidden');
       document.getElementById('txt-usuario-nav').innerText = usuarioLogueado === "Supervisor" ? "👔 Supervisor" : "👤 " + usuarioLogueado;
-      
-      // Limpiar input contraseña
       document.getElementById('login-pass').value = "";
       renderizar();
     }
@@ -182,39 +178,170 @@
 
     function verificarReinicioLunes() {
       const hoy = new Date();
-      if (hoy.getDay() === 1) { // Lunes
+      if (hoy.getDay() === 1) {
         const ultReinicio = localStorage.getItem('t_reinicio_v5');
         const hoyTexto = hoy.toLocaleDateString();
 
         if (ultReinicio !== hoyTexto && registros.length > 0) {
           const detalle = auxiliares.map(aux => {
             const tot = aux.areas.length * actividades.length;
-            
-          return { auxiliar: aux.nombre, realizadas: real, total: tot };
-        });
+            const real = registros.filter(r => r.auxiliar === aux.nombre).length;
+            return { auxiliar: aux.nombre, realizadas: real, total: tot };
+          });
 
-        informesSemanales.unshift({ id: Date.now(), fecha: hoyTexto, detalle: detalle, datosRaw: [...registros] });
-        registros = [];
-        localStorage.setItem('t_reinicio_v5', hoyTexto);
-        localStorage.removeItem('t_reg_v5');
-        localStorage.setItem('t_inf_v5', JSON.stringify(informesSemanales));
+          informesSemanales.unshift({ id: Date.now(), fecha: hoyTexto, detalle: detalle, datosRaw: [...registros] });
+          registros = [];
+          localStorage.setItem('t_reinicio_v5', hoyTexto);
+          localStorage.removeItem('t_reg_v5');
+          localStorage.setItem('t_inf_v5', JSON.stringify(informesSemanales));
+        }
       }
     }
-  }
 
-  // Ejecución inicial automática de la app
-  inicializarApp = () => {
-    // Escuchar cambios en el selector para mostrar la clave
-    const select = document.getElementById('login-usuario');
-    if (select) {
-      select.addEventListener('change', evaluarRolLogin);
+    function marcarActividad(auxiliar, area, actividad) {
+      if (usuarioLogueado !== "Supervisor" && usuarioLogueado !== auxiliar) {
+        alert("Acceso denegado: No puedes modificar las tareas de otro auxiliar.");
+        return;
+      }
+
+      const idx = registros.findIndex(r => r.auxiliar === auxiliar && r.area === area && r.actividad === actividad);
+      if (idx !== -1) {
+        registros.splice(idx, 1);
+      } else {
+        registros.push({ auxiliar, area, actividad });
+      }
+
+      try { localStorage.setItem('t_reg_v5', JSON.stringify(registros)); } catch(e) {}
+      renderizar();
     }
-    // Cargar visualización inicial
-    renderizar();
-  };
 
-  // Arrancar sistema
-  window.onload = inicializarApp;
+    function descargarCSV(nombre, filas) {
+      let csv = "data:text/csv;charset=utf-8,\uFEFF";
+      filas.forEach(f => { csv += f.map(c => `"${c}"`).join(",") + "\r\n"; });
+      const uri = encodeURI(csv);
+      const link = document.createElement("a");
+      link.setAttribute("href", uri);
+      link.setAttribute("download", nombre);
+      document.body.appendChild(link); link.click(); document.body.removeChild(link);
+    }
+
+    function exportarExcelActual() {
+      if (registros.length === 0) return alert("No hay registros en la semana actual.");
+      const filas = [["Auxiliar", "Área", "Actividad"]];
+      registros.forEach(r => filas.push([r.auxiliar, r.area, r.actividad]));
+      descargarCSV("Reporte_Actual_" + new Date().toLocaleDateString() + ".csv", filas);
+    }
+
+    function exportarHistorico(id) {
+      const inf = informesSemanales.find(i => i.id === id);
+      if (!inf) return;
+      const filas = [["Auxiliar", "Área", "Actividad"]];
+      inf.datosRaw.forEach(r => filas.push([r.auxiliar, r.area, r.actividad]));
+      descargarCSV("Reporte_Cierre_" + inf.fecha + ".csv", filas);
+    }
+
+    function renderizar() {
+      verificarReinicioLunes();
+
+      const pSup = document.getElementById('panel-supervisor');
+      const pAux = document.getElementById('panel-auxiliar');
+      
+      // Validación estricta de paneles para separar Supervisor de Auxiliares
+      if (usuarioLogueado === "Supervisor") {
+        if (pSup) pSup.classList.remove('hidden');
+        if (pAux) pAux.classList.add('hidden');
+
+        let htmlSupGrid = "";
+        auxiliares.forEach(aux => {
+          const real = registros.filter(r => r.auxiliar === aux.nombre).length;
+          const tot = aux.areas.length * actividades.length;
+          const porc = tot > 0 ? Math.round((real / tot) * 100) : 0;
+          htmlSupGrid += `<div style="background:#f8fafc; padding:12px; border-radius:12px; border:1px solid #e2e8f0;">
+            <div style="display:flex; justify-content:space-between; font-size:12px; font-weight:bold;"><span>👤 ${aux.nombre}</span><span>${porc}%</span></div>
+            <div class="barra-bg"><div class="barra-fill" style="width:${porc}%;"></div></div>
+            <p style="font-size:11px; color:#64748b; margin-top:4px;">Completadas: ${real} de ${tot}</p>
+          </div>`;
+        });
+        const gridProgreso = document.getElementById('sup-grid-progreso');
+        if (gridProgreso) gridProgreso.innerHTML = htmlSupGrid;
+
+        const cHist = document.getElementById('sup-contenedor-historial');
+        if (cHist) {
+          if (informesSemanales.length === 0) {
+            cHist.innerHTML = `<p style="color:#94a3b8; font-size:12px; text-align:center; padding:10px;">No hay reportes archivados todavía.</p>`;
+          } else {
+            cHist.innerHTML = informesSemanales.map(inf => `
+              <div class="historial-row">
+                <span>📅 Cierre Semana: <strong>${inf.fecha}</strong></span>
+                <button onclick="exportarHistorico(${inf.id})" class="btn btn-gray" style="padding:4px 8px; font-size:11px;">Excel 📥</button>
+              </div>
+            `).join('');
+          }
+        }
+
+      } else {
+        if (pSup) pSup.classList.add('hidden');
+        if (pAux) pAux.classList.remove('hidden');
+
+        const auxData = auxiliares.find(a => a.nombre === usuarioLogueado);
+        if (auxData) {
+          const real = registros.filter(r => r.auxiliar === usuarioLogueado).length;
+          const tot = auxData.areas.length * actividades.length;
+          const porc = tot > 0 ? Math.round((real / tot) * 100) : 0;
+
+          const txtAvance = document.getElementById('aux-txt-avance');
+          const txtPorc = document.getElementById('aux-txt-porc');
+          const barraFill = document.getElementById('aux-barra-fill');
+
+          if (txtAvance) txtAvance.innerText = real + " / " + tot + " Tareas";
+          if (txtPorc) txtPorc.innerText = porc + "%";
+          if (barraFill) barraFill.style.width = porc + "%";
+        }
+      }
+
+      const cTablas = document.getElementById('contenedor-tablas');
+      if (cTablas) {
+        cTablas.innerHTML = "";
+        auxiliares.forEach(aux => {
+          if (usuarioLogueado !== "Supervisor" && usuarioLogueado !== aux.nombre) return;
+
+          let htmlTabla = `<div class="tabla-bloque">
+            <div class="tabla-head">
+              <span>📋 Matriz de Actividades: ${aux.nombre}</span>
+            </div>
+            <div class="tabla-scroll"><table>
+              <thead><tr><th class="td-area">Área</th>`;
+          
+          actividades.forEach(act => { htmlTabla += `<th>${act}</th>`; });
+          htmlTabla += `</tr></thead><tbody>`;
+
+          aux.areas.forEach(area => {
+            htmlTabla += `<tr><td class="td-area">${area}</td>`;
+            actividades.forEach(act => {
+              const hecho = registros.some(r => r.auxiliar === aux.nombre && r.area === area && r.actividad === act);
+              const claseBtn = hecho ? "btn-check btn-hecho" : "btn-check btn-pendiente";
+              htmlTabla += `<td>
+                <button onclick="marcarActividad('${aux.nombre}', '${area}', '${act}')" class="${claseBtn}">${hecho ? '✓' : '+'}</button>
+              </td>`;
+            });
+            htmlTabla += `</tr>`;
+          });
+
+          htmlTabla += `</tbody></table></div></div>`;
+          cTablas.innerHTML += htmlTabla;
+        });
+      }
+    }
+
+    // Inicialización al cargar la página
+    window.onload = function() {
+      const select = document.getElementById('login-usuario');
+      if (select) {
+        select.addEventListener('change', evaluarRolLogin);
+      }
+      renderizar();
+    };
 </script>
 </body>
 </html>
+
