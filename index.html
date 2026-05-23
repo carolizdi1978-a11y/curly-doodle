@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tareas Tienda Cloud</title>
+ <!-- 1. Herramienta para los diseños y colores -->
+  <script src="https://tailwindcss.com"></script>
+  <!-- 2. Herramienta para conectar con internet y Supabase -->
+  <script src="https://jsdelivr.net"></script>
+</head>
+
+  <div class="max-w-md mx-auto bg-white min-h-screen shadow-md flex flex-col relative">
+    
+    <!-- ENCABEZADO Y MÉTRICAS -->
+    <header class="bg-blue-600 text-white p-5 rounded-b-2xl shadow-sm sticky top-0 z-10 space-y-4">
+      <div class="flex justify-between items-center">
+        <div>
+          <h1 class="text-xl font-bold tracking-tight">Mis Actividades</h1>
+          <select id="sesión-colaborador" onchange="cambiarUsuario()" class="mt-1 bg-blue-700 text-white text-xs font-semibold py-1 px-2 rounded-md border border-blue-500 focus:outline-none cursor-pointer">
+            <option value="">Cargando usuarios...</option>
+          </select>
+        </div>
+        <button onclick="toggleFormulario()" class="bg-white text-blue-600 hover:bg-blue-50 font-bold px-3 py-1.5 rounded-xl text-xs shadow-xs cursor-pointer active:scale-95 transition-all">
+          + Asignar Tarea
+        </button>
+      </div>
+
+      <div class="bg-blue-700/40 p-4 rounded-xl space-y-2 border border-blue-500/30">
+        <div class="flex justify-between text-xs font-bold tracking-wide">
+          <span class="text-blue-100">PROGRESO DEL DÍA</span>
+          <span id="txt-porcentaje" class="text-white">0%</span>
+        </div>
+        <div class="w-full bg-blue-900/40 rounded-full h-2.5 overflow-hidden">
+          <div id="barra-progreso" class="bg-green-400 h-full w-0 transition-all duration-500"></div>
+        </div>
+        <div class="text-xs text-blue-200 pt-1 flex justify-between font-medium">
+          <span>Pendientes: <strong id="resumen-pendientes" class="text-white font-bold">0</strong></span>
+          <span>Completadas: <strong id="resumen-completadas" class="text-white font-bold">0</strong></span>
+        </div>
+      </div>
+      
+      <div class="flex gap-2 bg-blue-700/50 p-1 rounded-xl">
+        <button onclick="filtrarTareas('pendientes')" id="btn-pendientes" class="flex-1 py-2 text-center text-xs font-semibold rounded-lg bg-white text-blue-700 shadow-xs transition-all">
+          Por Hacer
+        </button>
+        <button onclick="filtrarTareas('completadas')" id="btn-completadas" class="flex-1 py-2 text-center text-xs font-semibold rounded-lg text-blue-100 hover:text-white transition-all">
+          Historial
+        </button>
+      </div>
+    </header>
+
+    <!-- FORMULARIO -->
+    <div id="formulario-tarea" class="hidden bg-gray-50 border-b border-gray-200 p-5 space-y-3">
+      <h2 class="text-sm font-bold text-gray-700 uppercase tracking-wide">Asignar Nueva Tarea</h2>
+      <input type="text" id="nueva-titulo" placeholder="Ej: Sacar la basura del almacén" class="w-full p-2.5 border border-gray-300 rounded-lg text-sm bg-white focus:outline-blue-500">
+      <div>
+        <label class="text-[10px] font-bold text-gray-500 block mb-1 uppercase">Responsable:</label>
+        <select id="nueva-colaborador" class="w-full p-2.5 border border-gray-300 rounded-lg text-sm bg-white"></select>
+      </div>
+      <div class="grid grid-cols-2 gap-2">
+        <select id="nueva-area" class="p-2.5 border border-gray-300 rounded-lg text-sm bg-white">
+          <option value="Caja">Caja</option>
+          <option value="Almacén">Almacén</option>
+          <option value="Piso">Piso de Venta</option>
+        </select>
+        <select id="nueva-prioridad" class="p-2.5 border border-gray-300 rounded-lg text-sm bg-white">
+          <option value="baja">Prioridad Baja</option>
+          <option value="media">Prioridad Media</option>
+          <option value="alta">Prioridad Alta</option>
+        </select>
+      </div>
+      <div class="grid grid-cols-2 gap-2">
+        <select id="nueva-frecuencia" class="p-2.5 border border-gray-300 rounded-lg text-sm bg-white">
+          <option value="Única">Solo una vez</option>
+          <option value="Diaria">Cada día</option>
+          <option value="Semanal">Cada semana</option>
+          <option value="Mensual">Cada mes</option>
+        </select>
+        <input type="text" id="nueva-limite" placeholder="Ej: 14:00 PM" class="p-2.5 border border-gray-300 rounded-lg text-sm bg-white focus:outline-blue-500">
+      </div>
+      <div class="flex gap-2 pt-2">
+        <button onclick="toggleFormulario()" class="flex-1 py-2 bg-gray-200 text-gray-700 text-xs font-semibold rounded-lg cursor-pointer">Cancelar</button>
+        <button onclick="agregarTarea()" class="flex-1 py-2 bg-blue-600 text-white text-xs font-semibold rounded-lg cursor-pointer">Guardar</button>
+      </div>
+    </div>
+
+    <!-- LISTA DE TAREAS REALES -->
+    <main class="p-4 flex-1 overflow-y-auto space-y-3" id="contenedor-tareas">
+      <p class="text-center text-gray-400 my-8 text-xs font-medium">Conectando con el servidor de la tienda...</p>
+    </main>
+
+  </div>
+
+  <script>
+    // CONFIGURACIÓN DE CRIDENCIALES DE TU PROYECTO SUPABASE
+    const SUPABASE_URL = "TU_SUPABASE_URL"; 
+    const SUPABASE_ANON_KEY = "TU_SUPABASE_ANON_KEY";
+
+    const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    let colaboradores = [];
+    let tareas = [];
+    let filtroEstado = 'pendientes';
+    let usuarioActivoId = null;
+
+    // Inicializar la App descargando los datos de Internet
+    async function iniciarApp() {
+      // 1. Descargar lista de colaboradores reales
+      let { data: listaColaboradores, error: errC } = await supabase.from('colaboradores').select('*').order('nombre');
+      if (errC) return console.error(errC);
+      
+      colaboradores = listaColaboradores;
+      
+      // 2. Rellenar los elementos select de la interfaz
+      document.getElementById('sesión-colaborador').innerHTML = colaboradores.map(c => `<option value="${c.id}">👤 Ver como: ${c.nombre}</option>`).join('');
+      document.getElementById('nueva-colaborador').innerHTML = colaboradores.map(c => `<option value="${c.id}">${c.nombre}</option>`).join('');
+      
+      if (colaboradores.length > 0) {
+        usuarioActivoId = colaboradores[0].id;
+      }
+      
+      // 3. Descargar todas las tareas guardadas
+      await descargarTareas();
+    }
+
+    async function descargarTareas() {
+      let { data: listaTareas, error: errT } = await supabase.from('tareas').select('*').order('id', { ascending: false });
+      if (errT) return console.error(errT);
+      tareas = listaTareas;
+      renderizar();
+    }
+
+    function cambiarUsuario() {
+      usuarioActivoId = parseInt(document.getElementById('sesión-colaborador').value);
+      renderizar();
+    }
+
+    function calcularMetricas(tareasUsuario) {
+      const total = tareasUsuario.length;
+      const completadas = tareasUsuario.filter(t => t.completada).length;
+      const pendientes = total - completadas;
+      const porcentaje = total > 0 ? Math.round((completadas / total) * 100) : 0;
+
+      document.getElementById('txt-porcentaje').innerText = `${porcentaje}%`;
+      document.getElementById('resumen-pendientes').innerText = pendientes;
+      document.getElementById('resumen-completadas').innerText = completadas;
+      document.getElementById('barra-progreso').style.width = `${porcentaje}%`;
+    }
+
+    function renderizar() {
+      const contenedor = document.getElementById('contenedor-tareas');
+      contenedor.innerHTML = '';
+
+      const tareasDelUsuario = tareas.filter(t => t.colaborador_id === usuarioActivoId);
+      calcularMetricas(tareasDelUsuario);
+
+      const tareasFiltradas = tareasDelUsuario.filter(t => filtroEstado === 'completadas' ? t.completada : !t.completada);
+
+      if (tareasFiltradas.length === 0) {
+        contenedor.innerHTML = `<p class="text-center text-gray-400 my-8 text-xs font-medium">No hay tareas registradas en esta sección.</p>`;
+        return;
+      }
+
+      tareasFiltradas.forEach(tarea => {
+        let colorBorde = 'border-gray-300';
+        if (tarea.prioridad === 'alta') colorBorde = 'border-red-500';
+        if (tarea.prioridad === 'media') colorBorde = 'border-amber-500';
+
+        const btnCheckClass = tarea.completada ? 'bg-green-500 text-white border-green-500' : 'bg-white text-gray-300 border-gray-200';
+
+        const htmlTarea = `
+          <div class="border-l-4 ${colorBorde} bg-white p-4 rounded-xl shadow-xs flex justify-between items-center">
+            <div>
+              <div class="flex items-center gap-1.5">
+                <span class="text-[10px] font-bold text-gray-400 uppercase">${tarea.area}</span>
+                <span class="text-[9px] px-1.5 py-0.5 rounded-sm bg-gray-100 text-gray-600 font-bold uppercase">${tarea.frecuencia}</span>
+              </div>
+              <h3 class="text-sm font-semibold text-gray-800 mt-1 ${tarea.completada ? 'line-through text-gray-400' : ''}">${tarea.titulo}</h3>
+              <p class="text-[11px] font-medium text-gray-500 mt-1">⏱️ Límite: ${tarea.limite}</p>
+            </div>
+            <button onclick="alternarTarea(${tarea.id}, ${tarea.completada})" class="h-9 w-9 border rounded-full flex items-center justify-center font-bold cursor-pointer transition-all ${btnCheckClass}">
+              ✓
+            </button>
+          </div>
+        `;
+        contenedor.innerHTML += htmlTarea;
+      });
+    }
+
+    // Actualizar estado de la tarea directamente en el servidor de Internet
+    async function alternarTarea(id, estadoActual) {
+      const { error } = await supabase.from('tareas').update({ completada: !estadoActual }).eq('id', id);
+      if (error) return alert("Error al actualizar tarea en internet");
+      await descargarTareas();
+    }
+
+    function toggleFormulario() {
+      document.getElementById('formulario-tarea').classList.toggle('hidden');
+    }
+
+    // Guardar una nueva tarea en la base de datos de Internet
+    async function agregarTarea() {
+      const titulo = document.getElementById('nueva-titulo').value;
+      const colaborador_id = parseInt(document.getElementById('nueva-colaborador').value);
+      const area = document.getElementById('nueva-area').value;
+      const prioridad = document.getElementById('nueva-prioridad').value;
+      const frecuencia = document.getElementById('nueva-frecuencia').value;
+      const limite = document.getElementById('nueva-limite').value || 'Sin límite';
+
+      if (!titulo.trim()) return alert('Escribe el título de la tarea');
+
+      const { error } = await supabase.from('tareas').insert([{ titulo, colaborador_id, area, prioridad, frecuencia, limite }]);
+      if (error) return alert("Error al subir la tarea a internet");
+
+      toggleFormulario();
+      document.getElementById('nueva-titulo').value = '';
+      await descargarTareas();
+    }
+
+    function filtrarTareas(filtro) {
+      filtroEstado = filtro;
+      const btnP = document.getElementById('btn-pendientes');
+      const btnC = document.getElementById('btn-completadas');
+
+      if (filtro === 'pendientes') {
+        btnP.className = "flex-1 py-2 text-center text-xs font-semibold rounded-lg bg-white text-blue-700 shadow-xs transition-all";
+        btnC.className = "flex-1 py-2 text-center text-xs font-semibold rounded-lg text-blue-100 hover:text-white transition-all";
+      } else {
+        btnC.className = "flex-1 py-2 text-center text-xs font-semibold rounded-lg bg-white text-blue-700 shadow-xs transition-all";
+        btnP.className = "flex-1 py-2 text-center text-xs font-semibold rounded-lg text-blue-100 hover:text-white transition-all";
+      }
+      renderizar();
+    }
+
+    // Arrancar
+    iniciarApp();
+  </script> 
+</body>
+</html>
