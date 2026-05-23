@@ -1,25 +1,177 @@
-<style>
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
-    body { background-color: #f1f5f9; padding: 24px; color: #1e293b; }
-    .max-w-7xl { max-width: 1280px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; }
-    .grid { display: grid; gap: 24px; }
-    @media (min-width: 1024px) { .lg\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); } .lg\:col-span-2 { grid-column: span 2 / span 2; } }
-    @media (min-width: 640px) { .sm\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); } .lg\:grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
-    .bg-white { background-color: white; border-radius: 24px; padding: 24px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }
-    .flex { display: flex; } .items-center { align-items: center; } .gap-4 { gap: 16px; } .justify-between { justify-content: space-between; }
-    .bg-blue-100 { background-color: #dbeafe; padding: 12px; border-radius: 16px; font-size: 24px; }
-    .text-xl { font-size: 1.25rem; } .font-bold { font-weight: 700; } .text-slate-800 { color: #1e293b; } .text-slate-500 { color: #64748b; }
-    .bg-slate-50 { background-color: #f8fafc; padding: 16px; border-radius: 16px; margin-top: 16px; border: 1px solid #f1f5f9; }
-    .text-4xl { font-size: 2.25rem; } .font-black { font-weight: 900; }
-    .bg-amber-50 { background-color: #fef3c7; padding: 12px; border-radius: 8px; border: 1px solid #fde68a; margin-bottom: 8px; }
-    .w-full { width: 100%; } .bg-slate-100 { background-color: #f1f5f9; } .rounded-full { border-radius: 9999px; } .h-2 { height: 8px; } .overflow-hidden { overflow: hidden; }
-    .bg-green-500 { background-color: #22c55e; height: 100%; transition: width 0.3s; }
-    .overflow-x-auto { overflow-x: auto; } table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; }
-    th, td { padding: 12px; border-bottom: 1px solid #e2e8f0; } th { background-color: #f8fafc; color: #64748b; font-weight: 700; text-align: center; }
-    th:first-child, td:first-child { text-align: left; font-weight: 600; background-color: #f8fafc; }
-    .bg-slate-800 { background-color: #1e293b; color: white; padding: 16px 24px; font-weight: bold; border-top-left-radius: 24px; border-top-right-radius: 24px; }
-    .w-8 { width: 32px; } .h-8 { height: 32px; } .rounded-xl { border-radius: 12px; } .border { border: 1px solid #cbd5e1; }
-    .bg-green-500-btn { background-color: #22c55e; color: white; border-color: #22c55e; }
-    .bg-slate-100-btn { background-color: #f1f5f9; color: #94a3b8; }
-    button { cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-weight: bold; }
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Seguimiento Digital Tienda</title>
+  <!-- Estilos base fijos e independientes de internet -->
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
+    body { background-color: #f1f5f9; padding: 20px; color: #1e293b; }
+    .contenedor { max-w: 1200px; margin: 0 auto; }
+    .tarjeta-blanca { background: white; padding: 20px; border-radius: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; margin-bottom: 20px; }
+    .flex-header { display: flex; align-items: center; gap: 15px; margin-bottom: 15px; }
+    .badge-azul { background: #dbeafe; color: #1e40af; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: bold; display: inline-block; margin-top: 5px; }
+    .notif-item { background-color: #fef3c7; border: 1px solid #fde68a; padding: 10px; border-radius: 8px; margin-bottom: 5px; font-size: 12px; font-weight: bold; }
+    .grid-auxiliares { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-bottom: 25px; }
+    .tarjeta-auxiliar { background: white; padding: 15px; border-radius: 16px; border: 1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+    .barra-bg { width: 100%; background: #e2e8f0; height: 8px; border-radius: 4px; overflow: hidden; margin-top: 8px; }
+    .barra-progreso { background: #22c55e; height: 100%; transition: width 0.3s ease; }
+    .tabla-bloque { background: white; border-radius: 16px; overflow: hidden; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 30px; }
+    .tabla-titulo { background: #1e293b; color: white; padding: 12px 20px; font-size: 16px; font-weight: bold; }
+    .tabla-scroll { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; text-align: center; }
+    th, td { padding: 10px; border-bottom: 1px solid #e2e8f0; }
+    th { background: #f8fafc; color: #64748b; font-weight: bold; }
+    tr:hover { background-color: #f8fafc; }
+    .columna-area { text-align: left; font-weight: bold; color: #334155; background: #f8fafc; width: 200px; }
+    .btn-marcar { width: 32px; height: 32px; border-radius: 8px; border: 1px solid #cbd5e1; font-weight: bold; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; transition: all 0.2s; }
+    .btn-hecho { background: #22c55e; color: white; border-color: #22c55e; }
+    .btn-pendiente { background: #f1f5f9; color: #64748b; }
   </style>
+</head>
+<body>
+
+  <div class="contenedor">
+    
+    <!-- ENCABEZADO Y NOTIFICACIONES -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 20px;">
+      <div class="tarjeta-blanca" style="display: flex; flex-direction: column; justify-content: space-between;">
+        <div class="flex-header">
+          <div style="font-size: 30px; background: #dbeafe; padding: 10px; border-radius: 12px;">📋</div>
+          <div>
+            <h2 style="font-size: 18px; font-weight: bold;">Seguimiento Digital</h2>
+            <p style="color: #64748b; font-size: 12px;">Control de actividades en tienda</p>
+            <span class="badge-azul">Reinicio automático: Lunes</span>
+          </div>
+        </div>
+        <div style="background: #f8fafc; padding: 12px; border-radius: 12px; border: 1px solid #f1f5f9; margin-top: 10px;">
+          <p style="color: #64748b; font-size: 11px; font-weight: bold; text-transform: uppercase;">Actividades Globales Registradas</p>
+          <p id="total-global" style="font-size: 32px; font-weight: 900; margin-top: 2px;">0</p>
+        </div>
+      </div>
+
+      <div class="tarjeta-blanca">
+        <h2 style="font-size: 16px; font-weight: bold; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+          <span>🔔</span> Notificaciones Supervisor
+        </h2>
+        <div id="contenedor-notificaciones" style="max-height: 120px; overflow-y: auto;">
+          <p style="color: #94a3b8; font-size: 12px;">Aún no hay actividades registradas.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- PANELES DE AVANCE -->
+    <div id="grid-auxiliares" class="grid-auxiliares"></div>
+
+    <!-- MATRICES DE AUXILIARES -->
+    <div id="tablas-auxiliares"></div>
+
+  </div>
+
+  <script>
+    const auxiliares = [
+      { nombre: "Auxiliar 1", areas: ["Gaseosas", "Jugos", "Agua", "Alternativas 1", "Botanas 1", "Semillas"] },
+      { nombre: "Auxiliar 2", areas: ["Sopas", "Check Out", "Bomboneras", "Desayunos", "Botanas 2", "HYH"] },
+      { nombre: "Auxiliar 3", areas: ["Abarrotes", "Galletas", "Repostería", "Dulces", "Botanas 3"] },
+      { nombre: "Auxiliar 4", areas: ["Alternativas 2", "Colombina", "Cream Helado", "Koska", "Brikets + Cueros + SIM Card"] }
+    ];
+
+    const actividades = ["Inventario", "Limpieza", "Etiquetado", "Surtido"];
+
+    let registros = JSON.parse(localStorage.getItem('tienda_reg_final')) || [];
+    let notificaciones = JSON.parse(localStorage.getItem('tienda_not_final')) || [];
+
+    function guardar() {
+      localStorage.setItem('tienda_reg_final', JSON.stringify(registros));
+      localStorage.setItem('tienda_not_final', JSON.stringify(notificaciones));
+      renderizar();
+    }
+
+    function marcarActividad(auxiliar, area, actividad) {
+      const hoy = new Date();
+      const horaStr = hoy.toLocaleTimeString();
+      
+      const idx = registros.findIndex(r => r.auxiliar === auxiliar && r.area === area && r.actividad === actividad);
+      
+      if (idx !== -1) {
+        registros.splice(idx, 1);
+      } else {
+        registros.push({ auxiliar, area, actividad });
+        notificaciones.unshift({
+          mensaje: "✅ " + auxiliar + " hizo " + actividad + " en " + area,
+          hora: horaStr
+        });
+      }
+      guardar();
+    }
+
+    function renderizar() {
+      document.getElementById('total-global').innerText = registros.length;
+
+      // Render de Notificaciones
+      const cNotif = document.getElementById('contenedor-notificaciones');
+      if (notificaciones.length === 0) {
+        cNotif.innerHTML = '<p style="color: #94a3b8; font-size: 12px;">Aún no hay actividades registradas.</p>';
+      } else {
+        let htmlNotif = "";
+        for (let i = 0; i < Math.min(notificaciones.length, 4); i++) {
+          htmlNotif += "<div class='notif-item'>" + notificaciones[i].mensaje + " <span style='color: #94a3b8; font-weight: normal;'>(" + notificaciones[i].hora + ")</span></div>";
+        }
+        cNotif.innerHTML = htmlNotif;
+      }
+
+      // Render de Tarjetas de Progreso
+      let htmlCards = "";
+      auxiliares.forEach(aux => {
+        const realizadas = registros.filter(r => r.auxiliar === aux.nombre).length;
+        const totales = aux.areas.length * actividades.length;
+        const porc = totales > 0 ? Math.round((realizadas / totales) * 100) : 0;
+
+        htmlCards += "<div class='tarjeta-auxiliar'>" +
+          "<h3 style='font-size: 14px; font-weight: bold;'>👤 " + aux.nombre + "</h3>" +
+          "<p style='font-size: 20px; font-weight: 800; margin-top: 5px;'>" + realizadas + " <span style='font-size: 11px; color: #94a3b8; font-weight: normal;'>/ " + totales + "</span></p>" +
+          "<div class='barra-bg'><div class='barra-progreso' style='width:" + porc + "%'></div></div>" +
+          "<p style='font-size: 10px; color: #64748b; font-weight: bold; margin-top: 4px; text-transform: uppercase;'>" + porc + "% Completado</p>" +
+          "</div>";
+      });
+      document.getElementById('grid-auxiliares').innerHTML = htmlCards;
+
+      // Render Estricto de Tablas Matriz
+      let htmlTablas = "";
+      auxiliares.forEach(aux => {
+        let tabla = "<div class='tabla-bloque'>" +
+          "<div class='tabla-titulo'>Matriz de Control: " + aux.nombre + "</div>" +
+          "<div class='tabla-scroll'><table>" +
+          "<thead><tr><th class='columna-area'>Área Específica</th>";
+        
+        actividades.forEach(act => {
+          tabla += "<th>" + act + "</th>";
+        });
+        tabla += "</tr></thead><tbody>";
+
+        aux.areas.forEach(area => {
+          tabla += "<tr><td class='columna-area'>" + area + "</td>";
+          
+          actividades.forEach(act => {
+            const hecho = registros.some(r => r.auxiliar === aux.nombre && r.area === area && r.actividad === act);
+            const claseBtn = hecho ? "btn-marcar btn-hecho" : "btn-marcar btn-pendiente";
+            const textoBtn = hecho ? "✓" : "+";
+
+            tabla += "<td>" +
+              "<button onclick=\"marcarActividad('" + aux.nombre + "', '" + area + "', '" + act + "')\" class='" + claseBtn + "'>" + textoBtn + "</button>" +
+              "</td>";
+          });
+          tabla += "</tr>";
+        });
+
+        tabla += "</tbody></table></div></div>";
+        htmlTablas += tabla;
+      });
+      document.getElementById('tablas-auxiliares').innerHTML = htmlTablas;
+    }
+
+    renderizar();
+  </script>
+</body>
+</html>
