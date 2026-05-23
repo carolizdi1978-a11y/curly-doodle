@@ -176,7 +176,7 @@
       document.getElementById('view-login').classList.remove('hidden');
     }
 
-    function verificarReinicioLunes() {
+      function verificarReinicioLunes() {
       const hoy = new Date();
       if (hoy.getDay() === 1) {
         const ultReinicio = localStorage.getItem('t_reinicio_v5');
@@ -246,10 +246,9 @@
       const pSup = document.getElementById('panel-supervisor');
       const pAux = document.getElementById('panel-auxiliar');
       
-      // Validación estricta de paneles para separar Supervisor de Auxiliares
       if (usuarioLogueado === "Supervisor") {
-        if (pSup) pSup.classList.remove('hidden');
-        if (pAux) pAux.classList.add('hidden');
+        if (pSup) pSup.style.display = "block";
+        if (pAux) pAux.style.display = "none";
 
         let htmlSupGrid = "";
         auxiliares.forEach(aux => {
@@ -280,8 +279,8 @@
         }
 
       } else {
-        if (pSup) pSup.classList.add('hidden');
-        if (pAux) pAux.classList.remove('hidden');
+        if (pSup) pSup.style.display = "none";
+        if (pAux) pAux.style.display = "block";
 
         const auxData = auxiliares.find(a => a.nombre === usuarioLogueado);
         if (auxData) {
@@ -333,7 +332,6 @@
       }
     }
 
-    // Inicialización al cargar la página
     window.onload = function() {
       const select = document.getElementById('login-usuario');
       if (select) {
@@ -344,4 +342,3 @@
 </script>
 </body>
 </html>
-
