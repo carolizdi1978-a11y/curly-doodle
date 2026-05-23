@@ -4,104 +4,154 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Tareas Tienda</title>
-  <script src="https://tailwindcss.com"></script>
-</head>
-<body class="bg-gray-100 min-h-screen font-sans antialiased text-gray-800">
-
-  <div class="max-w-md mx-auto bg-white min-h-screen shadow-md flex flex-col relative">
+  
+  <!-- DISEÑO INTEGRADO (Garantiza que se vea bien siempre sin depender de servidores externos) -->
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
+    body { bg-color: #f3f4f6; background-color: #f3f4f6; padding: 0; min-height: screen; }
+    .app-container { max-w: 28rem; max-width: 440px; margin: 0 auto; background: white; min-height: 100vh; display: flex; flex-direction: column; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); position: relative; }
     
-    <!-- ENCABEZADO Y ESTADÍSTICAS -->
-    <header class="bg-blue-600 text-white p-5 rounded-b-2xl shadow-sm sticky top-0 z-10 space-y-4">
-      <div class="flex justify-between items-center">
+    header { background-color: #2563eb; color: white; padding: 20px; border-bottom-left-radius: 16px; border-bottom-right-radius: 16px; position: sticky; top: 0; z-index: 10; }
+    .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .header-title { font-size: 1.25rem; font-weight: bold; }
+    
+    .btn-nueva { background: white; color: #2563eb; font-weight: bold; border: none; padding: 6px 12px; border-radius: 8px; font-size: 0.75rem; cursor: pointer; }
+    .select-user { margin-top: 4px; background: #1d4ed8; color: white; font-size: 0.75rem; padding: 4px; border-radius: 6px; border: 1px solid #3b82f6; width: 100%; max-width: 180px; }
+    
+    .stats-panel { background: rgba(29, 78, 216, 0.4); padding: 12px; border-radius: 12px; border: 1px solid rgba(59, 130, 246, 0.3); margin-bottom: 16px; }
+    .stats-label { display: flex; justify-content: space-between; font-size: 0.75rem; font-weight: bold; margin-bottom: 6px; }
+    .progress-bar-bg { w-full; background: rgba(30, 58, 138, 0.4); border-radius: 9999px; h-2.5; height: 10px; overflow: hidden; }
+    .progress-bar-fill { background: #4ade80; height: 100%; width: 0%; transition: width 0.4s ease; }
+    .stats-counters { display: flex; justify-content: space-between; font-size: 0.75rem; margin-top: 6px; color: #bfdbfe; }
+    
+    .tabs-container { display: flex; gap: 8px; background: rgba(29, 78, 216, 0.5); padding: 4px; border-radius: 8px; }
+    .tab-btn { flex: 1; padding: 8px; text-align: center; font-size: 0.75rem; font-weight: font-semibold; border-radius: 6px; border: none; cursor: pointer; transition: all 0.2s; }
+    .tab-active { background: white; color: #2563eb; font-weight: bold; }
+    .tab-inactive { background: transparent; color: #dbeafe; }
+    
+    .form-container { background: #f9fafb; border-bottom: 1px solid #e5e7eb; padding: 20px; display: flex; flex-direction: column; gap: 12px; }
+    .form-container.hidden { display: none; }
+    .form-title { font-size: 0.875rem; font-weight: bold; text-transform: uppercase; color: #374151; }
+    .input-text { width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 0.875rem; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .btn-row { display: flex; gap: 8px; margin-top: 8px; }
+    .btn-submit { flex: 1; padding: 10px; background: #2563eb; color: white; border: none; font-size: 0.75rem; font-weight: bold; border-radius: 8px; cursor: pointer; }
+    .btn-cancel { flex: 1; padding: 10px; background: #e5e7eb; color: #374151; border: none; font-size: 0.75rem; font-weight: bold; border-radius: 8px; cursor: pointer; }
+    
+    main { padding: 16px; display: flex; flex-direction: column; gap: 12px; flex: 1; overflow-y: auto; }
+    .task-card { background: white; padding: 16px; border-radius: 12px; border-left: 5px solid #d1d5db; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.05); border-top: 1px solid #f3f4f6; border-right: 1px solid #f3f4f6; border-bottom: 1px solid #f3f4f6; }
+    .border-alta { border-left-color: #ef4444; }
+    .border-media { border-left-color: #f59e0b; }
+    .border-baja { border-left-color: #10b981; }
+    
+    .tag-container { display: flex; gap: 6px; align-items: center; margin-bottom: 4px; }
+    .tag-area { font-size: 0.65rem; font-weight: bold; color: #9ca3af; text-transform: uppercase; }
+    .tag-freq { font-size: 0.6rem; font-weight: bold; background: #f3f4f6; color: #4b5563; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; }
+    .task-title { font-size: 0.95rem; font-weight: 600; color: #1f2937; }
+    .task-title.completed { text-decoration: line-through; color: #9ca3af; }
+    .task-limit { font-size: 0.7rem; color: #6b7280; margin-top: 4px; }
+    
+    .btn-check { width: 36px; height: 36px; border-radius: 9999px; border: 2px solid #e5e7eb; background: white; color: #d1d5db; font-weight: bold; font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+    .btn-check.completed { background: #22c55e; border-color: #22c55e; color: white; }
+    .no-tasks { text-align: center; color: #9ca3af; font-size: 0.75rem; margin-top: 32px; }
+  </style>
+</head>
+<body>
+
+  <div class="app-container">
+    
+    <!-- ENCABEZADO -->
+    <header>
+      <div class="header-top">
         <div>
-          <h1 class="text-xl font-bold tracking-tight">Mis Actividades</h1>
-          <select id="sesión-colaborador" onchange="cambiarUsuario()" class="mt-1 bg-blue-700 text-white text-xs font-semibold py-1 px-2 rounded-md border border-blue-500 focus:outline-none cursor-pointer">
+          <h1 class="header-title">Mis Actividades</h1>
+          <select id="sesión-colaborador" onchange="cambiarUsuario()" class="select-user">
           </select>
         </div>
-        <button onclick="toggleFormulario()" class="bg-white text-blue-600 hover:bg-blue-50 font-bold px-3 py-1.5 rounded-xl text-xs shadow-xs cursor-pointer active:scale-95 transition-all">
-          + Asignar Tarea
-        </button>
+        <button onclick="toggleFormulario()" class="btn-nueva">+ Asignar Tarea</button>
       </div>
 
-      <div class="bg-blue-700/40 p-4 rounded-xl space-y-2 border border-blue-500/30">
-        <div class="flex justify-between text-xs font-bold tracking-wide">
-          <span class="text-blue-100">PROGRESO DEL DÍA</span>
-          <span id="txt-porcentaje" class="text-white">0%</span>
+      <!-- PANEL DE MÉTRICAS -->
+      <div class="stats-panel">
+        <div class="stats-label">
+          <span>PROGRESO DEL DÍA</span>
+          <span id="txt-porcentaje">0%</span>
         </div>
-        <div class="w-full bg-blue-900/40 rounded-full h-2.5 overflow-hidden">
-          <div id="barra-progreso" class="bg-green-400 h-full w-0 transition-all duration-500"></div>
+        <div class="progress-bar-bg">
+          <div id="barra-progreso" class="progress-bar-fill"></div>
         </div>
-        <div class="text-xs text-blue-200 pt-1 flex justify-between font-medium">
-          <span>Pendientes: <strong id="resumen-pendientes" class="text-white font-bold">0</strong></span>
-          <span>Completadas: <strong id="resumen-completadas" class="text-white font-bold">0</strong></span>
+        <div class="stats-counters">
+          <span>Pendientes: <strong id="resumen-pendientes" style="color:white;">0</strong></span>
+          <span>Completadas: <strong id="resumen-completadas" style="color:white;">0</strong></span>
         </div>
       </div>
       
-      <div class="flex gap-2 bg-blue-700/50 p-1 rounded-xl">
-        <button onclick="filtrarTareas('pendientes')" id="btn-pendientes" class="flex-1 py-2 text-center text-xs font-semibold rounded-lg bg-white text-blue-700 shadow-xs transition-all">
-          Por Hacer
-        </button>
-        <button onclick="filtrarTareas('completadas')" id="btn-completadas" class="flex-1 py-2 text-center text-xs font-semibold rounded-lg text-blue-100 hover:text-white transition-all">
-          Historial
-        </button>
+      <!-- PESTAÑAS -->
+      <div class="tabs-container">
+        <button onclick="filtrarTareas('pendientes')" id="btn-pendientes" class="tab-btn tab-active">Por Hacer</button>
+        <button onclick="filtrarTareas('completadas')" id="btn-completadas" class="tab-btn tab-inactive">Historial</button>
       </div>
     </header>
 
-    <!-- FORMULARIO NUEVA TAREA -->
-    <div id="formulario-tarea" class="hidden bg-gray-50 border-b border-gray-200 p-5 space-y-3">
-      <h2 class="text-sm font-bold text-gray-700 uppercase tracking-wide">Asignar Nueva Tarea</h2>
-      <input type="text" id="nueva-titulo" placeholder="Ej: Sacar la basura del almacén" class="w-full p-2.5 border border-gray-300 rounded-lg text-sm bg-white focus:outline-blue-500">
+    <!-- FORMULARIO -->
+    <div id="formulario-tarea" class="form-container hidden">
+      <h2 class="form-title">Asignar Nueva Tarea</h2>
+      <input type="text" id="nueva-titulo" placeholder="Ej: Sacar la basura del almacén" class="input-text">
+      
       <div>
-        <label class="text-[10px] font-bold text-gray-500 block mb-1 uppercase">Responsable:</label>
-        <select id="nueva-colaborador" class="w-full p-2.5 border border-gray-300 rounded-lg text-sm bg-white"></select>
+        <label style="font-size: 10px; font-weight: bold; color: #6b7280; display: block; margin-bottom: 4px;">RESPONSABLE:</label>
+        <select id="nueva-colaborador" class="input-text"></select>
       </div>
-      <div class="grid grid-cols-2 gap-2">
-        <select id="nueva-area" class="p-2.5 border border-gray-300 rounded-lg text-sm bg-white">
+      
+      <div class="grid-2">
+        <select id="nueva-area" class="input-text">
           <option value="Caja">Caja</option>
           <option value="Almacén">Almacén</option>
           <option value="Piso">Piso de Venta</option>
         </select>
-        <select id="nueva-prioridad" class="p-2.5 border border-gray-300 rounded-lg text-sm bg-white">
+        <select id="nueva-prioridad" class="input-text">
           <option value="baja">Prioridad Baja</option>
           <option value="media">Prioridad Media</option>
           <option value="alta">Prioridad Alta</option>
         </select>
       </div>
-      <div class="grid grid-cols-2 gap-2">
-        <select id="nueva-frecuencia" class="p-2.5 border border-gray-300 rounded-lg text-sm bg-white">
+      
+      <div class="grid-2">
+        <select id="nueva-frecuencia" class="input-text">
           <option value="Única">Solo una vez</option>
           <option value="Diaria">Cada día</option>
           <option value="Semanal">Cada semana</option>
           <option value="Mensual">Cada mes</option>
         </select>
-        <input type="text" id="nueva-limite" placeholder="Ej: 14:00 PM" class="p-2.5 border border-gray-300 rounded-lg text-sm bg-white focus:outline-blue-500">
+        <input type="text" id="nueva-limite" placeholder="Ej: 14:00 PM" class="input-text">
       </div>
-      <div class="flex gap-2 pt-2">
-        <button onclick="toggleFormulario()" class="flex-1 py-2 bg-gray-200 text-gray-700 text-xs font-semibold rounded-lg cursor-pointer">Cancelar</button>
-        <button onclick="agregarTarea()" class="flex-1 py-2 bg-blue-600 text-white text-xs font-semibold rounded-lg cursor-pointer">Guardar</button>
+      
+      <div class="btn-row">
+        <button onclick="toggleFormulario()" class="btn-cancel">Cancelar</button>
+        <button onclick="agregarTarea()" class="btn-submit">Guardar</button>
       </div>
     </div>
 
     <!-- LISTA DE TAREAS -->
-    <main class="p-4 flex-1 overflow-y-auto space-y-3" id="contenedor-tareas"></main>
+    <main id="contenedor-tareas"></main>
 
   </div>
 
   <script>
     const colaboradores = ["Carlos Gómez", "Ana Martínez", "Luis Rodríguez", "Sofía Peña"];
     
-    // Cargar datos guardados previamente en el teléfono o usar iniciales
     let tareas = JSON.parse(localStorage.getItem('tareas_tienda')) || [
       { id: 1, titulo: "Arqueo de caja matutino", area: "Caja", limite: "10:30 AM", prioridad: "alta", frecuencia: "Diaria", colaborador: "Carlos Gómez", completada: false },
-      { id: 2, titulo: "Reponer stock central", area: "Almacén", limite: "12:00 PM", prioridad: "media", frecuencia: "Semanal", colaborador: "Ana Martínez", completada: false }
+      { id: 2, titulo: "Reponer stock central", area: "Almacén", limite: "12:00 PM", prioridad: "media", frecuencia: "Semanal", colaborador: "Ana Martínez", completada: false },
+      { id: 3, titulo: "Organizar vitrina exterior", area: "Piso", limite: "04:00 PM", prioridad: "baja", frecuencia: "Única", colaborador: "Carlos Gómez", completada: false }
     ];
 
     let filtroEstado = 'pendientes';
     let usuarioActivo = colaboradores[0];
 
     function inicializar() {
-      document.getElementById('sesión-colaborador').innerHTML = colaboradores.map(c => `<option value="${c}">👤 Ver como: ${c}</option>`).join('');
-      document.getElementById('nueva-colaborador').innerHTML = colaboradores.map(c => `<option value="${c}">${c}</option>`).join('');
+      document.getElementById('sesión-colaborador').innerHTML = colaboradores.map(c => <option value="${c}">👤 Ver como: ${c}</option>).join('');
+      document.getElementById('nueva-colaborador').innerHTML = colaboradores.map(c => <option value="${c}">${c}</option>).join('');
       renderizar();
     }
 
@@ -116,75 +166,10 @@
 
       const tareasDelUsuario = tareas.filter(t => t.colaborador === usuarioActivo);
       
-      // Métricas
       const total = tareasDelUsuario.length;
       const completadas = tareasDelUsuario.filter(t => t.completada).length;
       const porcentaje = total > 0 ? Math.round((completadas / total) * 100) : 0;
 
-      document.getElementById('txt-porcentaje').innerText = `${porcentaje}%`;
+      document.getElementById('txt-porcentaje').innerText = porcentaje + '%';
       document.getElementById('resumen-pendientes').innerText = total - completadas;
-      document.getElementById('resumen-completadas').innerText = completadas;
-      document.getElementById('barra-progreso').style.width = `${porcentaje}%`;
-
-      const filtradas = tareasDelUsuario.filter(t => filtroEstado === 'completadas' ? t.completada : !t.completada);
-
-      if (filtradas.length === 0) {
-        contenedor.innerHTML = `<p class="text-center text-gray-400 my-8 text-xs font-medium">No hay tareas en esta sección.</p>`;
-        return;
-      }
-
-      filtradas.forEach(tarea => {
-        let border = tarea.prioridad === 'alta' ? 'border-red-500' : (tarea.prioridad === 'media' ? 'border-amber-500' : 'border-gray-300');
-        let btn = tarea.completada ? 'bg-green-500 text-white border-green-500' : 'bg-white text-gray-300 border-gray-200';
-
-        contenedor.innerHTML += `
-          <div class="border-l-4 ${border} bg-white p-4 rounded-xl shadow-xs flex justify-between items-center">
-            <div>
-              <div class="flex items-center gap-1.5">
-                <span class="text-[10px] font-bold text-gray-400 uppercase">${tarea.area}</span>
-                <span class="text-[9px] px-1.5 py-0.5 rounded-sm bg-gray-100 text-gray-600 font-bold uppercase">${tarea.frecuencia}</span>
-              </div>
-              <h3 class="text-sm font-semibold text-gray-800 mt-1 ${tarea.completada ? 'line-through text-gray-400' : ''}">${tarea.titulo}</h3>
-              <p class="text-[11px] font-medium text-gray-500 mt-1">⏱️ Límite: ${tarea.limite}</p>
-            </div>
-            <button onclick="alternar(${tarea.id})" class="h-9 w-9 border rounded-full flex items-center justify-center font-bold content-center ${btn}">✓</button>
-          </div>`;
-      });
-    }
-
-    function alternar(id) {
-      const t = tareas.find(t => t.id === id);
-      if (t) t.completada = !t.completada;
-      guardar();
-    }
-
-    function agregarTarea() {
-      const titulo = document.getElementById('nueva-titulo').value;
-      if (!titulo.trim()) return alert('Escribe la tarea');
-
-      tareas.unshift({
-        id: Date.now(),
-        titulo,
-        colaborador: document.getElementById('nueva-colaborador').value,
-        area: document.getElementById('nueva-area').value,
-        prioridad: document.getElementById('nueva-prioridad').value,
-        frecuencia: document.getElementById('nueva-frecuencia').value,
-        limite: document.getElementById('nueva-limite').value || 'Sin límite',
-        completada: false
-      });
-
-      document.getElementById('nueva-titulo').value = '';
-      toggleFormulario();
-      guardar();
-    }
-
-    function guardar() {
-      localStorage.setItem('tareas_tienda', JSON.stringify(tareas));
-      renderizar();
-    }
-
-    function toggleFormulario() { document.getElementById('formulario-tarea').classList.toggle('hidden'); }
-    
-    function filtrarTareas(f) {
-      filtroEstado = f;
-      document.getElementById('btn-pendientes').className = f === 'pendientes' ? "flex-1 py-2 text-center text-xs font-semibold rounded-lg bg-white text-blue-700 shadow-xs" : "flex-1 py-2 text-center text-xs font-semibold rounded-lg text-blue-100";
+      document.getElementById('resumen-completadas').innerText = completadas;document.getElementById('barra-progreso').style.width = porcentaje + '%';const filtradas = tareasDelUsuario.filter(t => filtroEstado === 'completadas' ? t.completada : !t.completada);if (filtradas.length === 0) {contenedor.innerHTML = 'No hay tareas en esta sección.';return;}filtradas.forEach(tarea => {let borderClass = 'border-media';if (tarea.prioridad === 'alta') borderClass = 'border-alta';if (tarea.prioridad === 'baja') borderClass = 'border-baja';let checkClass = tarea.completada ? 'completed' : '';contenedor.innerHTML +=  <div class="task-card ${borderClass}"> <div> <div class="tag-container"> <span class="tag-area">${tarea.area}</span> <span class="tag-freq">${tarea.frecuencia}</span> </div> <h3 class="task-title ${tarea.completada ? 'completed' : ''}">${tarea.titulo}</h3> <p class="task-limit">⏱️ Límite: ${tarea.limite}</p> </div> <button onclick="alternar(${tarea.id})" class="btn-check ${checkClass}">✓</button> </div>;});}function alternar(id) {const t = tareas.find(t => t.id === id);if (t) t.completada = !t.completada;guardar();}function agregarTarea() {const titulo = document.getElementById('nueva-titulo').value;if (!titulo.trim()) return alert('Escribe la tarea');tareas.unshift({id: Date.now(),titulo: titulo,colaborador: document.getElementById('nueva-colaborador').value,area: document.getElementById('nueva-area').value,prioridad: document.getElementById('nueva-prioridad').value,frecuencia: document.getElementById('nueva-frecuencia').value,limite: document.getElementById('nueva-limite').value || 'Sin límite',completada: false});document.getElementById('nueva-titulo').value = '';toggleFormulario();guardar();}function guardar() {localStorage.setItem('tareas_tienda', JSON.stringify(tareas));renderizar();}function toggleFormulario() {document.getElementById('formulario-tarea').classList.toggle('hidden');}function filtrarTareas(f) {filtroEstado = f;document.getElementById('btn-pendientes').className = f === 'pendientes' ? "tab-btn tab-active" : "tab-btn tab-inactive";document.getElementById('btn-completadas').className = f === 'completadas' ? "tab-btn tab-active" : "tab-btn tab-inactive";renderizar();}inicializar();
