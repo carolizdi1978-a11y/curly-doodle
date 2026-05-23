@@ -3,69 +3,124 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Seguimiento Digital Tienda</title>
-  <!-- Estilos base fijos e independientes de internet -->
+  <title>Sistema Control Tienda - MultiPanel</title>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
-    body { background-color: #f1f5f9; padding: 20px; color: #1e293b; }
-    .contenedor { max-w: 1200px; margin: 0 auto; }
-    .tarjeta-blanca { background: white; padding: 20px; border-radius: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; margin-bottom: 20px; }
-    .flex-header { display: flex; align-items: center; gap: 15px; margin-bottom: 15px; }
-    .badge-azul { background: #dbeafe; color: #1e40af; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: bold; display: inline-block; margin-top: 5px; }
-    .notif-item { background-color: #fef3c7; border: 1px solid #fde68a; padding: 10px; border-radius: 8px; margin-bottom: 5px; font-size: 12px; font-weight: bold; }
-    .grid-auxiliares { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-bottom: 25px; }
-    .tarjeta-auxiliar { background: white; padding: 15px; border-radius: 16px; border: 1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
+    body { background-color: #f1f5f9; padding: 16px; color: #1e293b; min-height: 100vh; }
+    .contenedor { max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+    
+    /* Login */
+    .login-box { max-width: 400px; margin: 100px auto; background: white; padding: 30px; border-radius: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; text-align: center; }
+    .select-input, .text-input { width: 100%; padding: 12px; margin: 15px 0; border-radius: 10px; border: 1px solid #cbd5e1; font-size: 14px; background: white; }
+    
+    /* Componentes */
+    .tarjeta { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.03); border: 1px solid #e2e8f0; }
+    .nav-bar { display: flex; justify-content: space-between; align-items: center; background: #1e293b; color: white; padding: 14px 20px; border-radius: 16px; }
+    
+    .grid-supervisor { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 15px; }
     .barra-bg { width: 100%; background: #e2e8f0; height: 8px; border-radius: 4px; overflow: hidden; margin-top: 8px; }
-    .barra-progreso { background: #22c55e; height: 100%; transition: width 0.3s ease; }
-    .tabla-bloque { background: white; border-radius: 16px; overflow: hidden; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 30px; }
-    .tabla-titulo { background: #1e293b; color: white; padding: 12px 20px; font-size: 16px; font-weight: bold; }
+    .barra-fill { background: #22c55e; height: 100%; width: 0%; transition: width 0.3s ease; }
+    
+    /* Tablas */
+    .tabla-bloque { background: white; border-radius: 20px; overflow: hidden; border: 1px solid #e2e8f0; margin-top: 10px; }
+    .tabla-head { background: #334155; color: white; padding: 12px 20px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
     .tabla-scroll { overflow-x: auto; }
     table { width: 100%; border-collapse: collapse; font-size: 13px; text-align: center; }
-    th, td { padding: 10px; border-bottom: 1px solid #e2e8f0; }
+    th, td { padding: 12px; border-bottom: 1px solid #e2e8f0; }
     th { background: #f8fafc; color: #64748b; font-weight: bold; }
-    tr:hover { background-color: #f8fafc; }
-    .columna-area { text-align: left; font-weight: bold; color: #334155; background: #f8fafc; width: 200px; }
-    .btn-marcar { width: 32px; height: 32px; border-radius: 8px; border: 1px solid #cbd5e1; font-weight: bold; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; transition: all 0.2s; }
+    .td-area { text-align: left; font-weight: bold; background: #f8fafc; width: 220px; color: #334155; }
+    
+    .btn { background: #2563eb; color: white; border: none; padding: 10px 16px; border-radius: 10px; font-weight: bold; font-size: 13px; cursor: pointer; }
+    .btn-green { background: #16a34a; } .btn-red { background: #dc2626; } .btn-gray { background: #64748b; }
+    
+    .btn-check { width: 34px; height: 34px; border-radius: 8px; border: 1px solid #cbd5e1; font-weight: bold; cursor: pointer; }
     .btn-hecho { background: #22c55e; color: white; border-color: #22c55e; }
-    .btn-pendiente { background: #f1f5f9; color: #64748b; }
+    .btn-pendiente { background: #f8fafc; color: #94a3b8; }
+    
+    .hidden { display: none; }
+    .historial-row { padding: 10px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
   </style>
 </head>
 <body>
 
-  <div class="contenedor">
+  <!-- PANTALLA DE ACCESO (LOGIN) -->
+  <div id="view-login" class="login-box">
+    <h2 style="font-size: 22px; font-weight: 800; color: #1e293b;">Acceso al Sistema</h2>
+    <p style="color: #64748b; font-size: 13px; margin-top: 4px;">Selecciona tu usuario de tienda</p>
     
-    <!-- ENCABEZADO Y NOTIFICACIONES -->
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 20px;">
-      <div class="tarjeta-blanca" style="display: flex; flex-direction: column; justify-content: space-between;">
-        <div class="flex-header">
-          <div style="font-size: 30px; background: #dbeafe; padding: 10px; border-radius: 12px;">📋</div>
-          <div>
-            <h2 style="font-size: 18px; font-weight: bold;">Seguimiento Digital</h2>
-            <p style="color: #64748b; font-size: 12px;">Control de actividades en tienda</p>
-            <span class="badge-azul">Reinicio automático: Lunes</span>
-          </div>
+    <select id="login-usuario" onchange="evaluarRolLogin()" class="select-input">
+      <option value="Auxiliar 1">👤 Auxiliar 1</option>
+      <option value="Auxiliar 2">👤 Auxiliar 2</option>
+      <option value="Auxiliar 3">👤 Auxiliar 3</option>
+      <option value="Auxiliar 4">👤 Auxiliar 4</option>
+      <option value="Supervisor">👔 Supervisor General</option>
+    </select>
+
+    <div id="box-password" class="hidden">
+      <input type="password" id="login-pass" placeholder="Contraseña de Supervisor" class="text-input">
+    </div>
+
+    <button onclick="ingresarSistema()" class="btn" style="width: 100%; padding: 12px; margin-top: 10px;">Ingresar al Panel</button>
+  </div>
+
+  <!-- CONTENEDOR PRINCIPAL DE LA APP -->
+  <div id="view-app" class="contenedor hidden">
+    
+    <!-- BARRA SUPERIOR DE SESIÓN -->
+    <div class="nav-bar">
+      <div>
+        <span style="font-size: 12px; color: #94a3b8; display: block;">Usuario Activo:</span>
+        <strong id="txt-usuario-nav" style="font-size: 16px;">Nombre</strong>
+      </div>
+      <button onclick="cerrarSesion()" class="btn btn-gray" style="padding: 6px 12px; font-size: 11px;">Cerrar Sesión 🚪</button>
+    </div>
+
+    <!-- PANEL EXCLUSIVO DEL SUPERVISOR -->
+    <div id="panel-supervisor" class="space-y-6 hidden" style="display: flex; flex-direction: column; gap: 20px;">
+      
+      <!-- Cuadro de mandos y Descarga Global -->
+      <div class="tarjeta" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+        <div>
+          <h2 style="font-size: 18px; font-weight: bold;">Consola del Supervisor General</h2>
+          <p style="color: #64748b; font-size: 12px;">Auditoría completa de avances de la tienda</p>
         </div>
-        <div style="background: #f8fafc; padding: 12px; border-radius: 12px; border: 1px solid #f1f5f9; margin-top: 10px;">
-          <p style="color: #64748b; font-size: 11px; font-weight: bold; text-transform: uppercase;">Actividades Globales Registradas</p>
-          <p id="total-global" style="font-size: 32px; font-weight: 900; margin-top: 2px;">0</p>
-        </div>
+        <button onclick="exportarExcelActual()" class="btn btn-green">Descargar Excel Semana Actual 📥</button>
       </div>
 
-      <div class="tarjeta-blanca">
-        <h2 style="font-size: 16px; font-weight: bold; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
-          <span>🔔</span> Notificaciones Supervisor
-        </h2>
-        <div id="contenedor-notificaciones" style="max-height: 120px; overflow-y: auto;">
-          <p style="color: #94a3b8; font-size: 12px;">Aún no hay actividades registradas.</p>
+      <!-- Progreso en vivo de todos los colaboradores -->
+      <div class="tarjeta">
+        <h3 style="font-size: 14px; font-weight: bold; margin-bottom: 12px;">📈 Progreso General del Personal</h3>
+        <div id="sup-grid-progreso" class="grid-supervisor"></div>
+      </div>
+
+      <!-- Historial de informes archivados -->
+      <div class="tarjeta">
+        <h3 style="font-size: 14px; font-weight: bold; margin-bottom: 10px;">🗄️ Historial de Reportes Semanales (Cierres de Lunes)</h3>
+        <div id="sup-contenedor-historial" style="max-height: 150px; overflow-y: auto;">
+          <p style="color: #94a3b8; font-size: 12px; text-align: center; padding: 10px;">No hay reportes semanales archivados aún.</p>
         </div>
       </div>
     </div>
 
-    <!-- PANELES DE AVANCE -->
-    <div id="grid-auxiliares" class="grid-auxiliares"></div>
+    <!-- PANEL EXCLUSIVO DEL AUXILIAR (RESUMEN PROPIO) -->
+    <div id="panel-auxiliar" class="tarjeta hidden" style="background: linear-gradient(135deg, #1e3a8a, #1e40af); color: white;">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <p style="font-size: 12px; color: #bfdbfe; font-weight: bold; tracking-wide: uppercase;">MI RENDIMIENTO DE LA SEMANA</p>
+          <p style="font-size: 28px; font-weight: 900; margin-top: 4px;" id="aux-txt-avance">0 / 0</p>
+        </div>
+        <div style="text-align: right;">
+          <p id="aux-txt-porc" style="font-size: 24px; font-weight: bold;">0%</p>
+          <p style="font-size: 11px; color: #bfdbfe;">Completado</p>
+        </div>
+      </div>
+      <div class="barra-bg" style="background: rgba(255,255,255,0.2); margin-top: 15px; height: 10px;">
+        <div id="aux-barra-fill" class="barra-fill" style="background: #4ade80;"></div>
+      </div>
+    </div>
 
-    <!-- MATRICES DE AUXILIARES -->
-    <div id="tablas-auxiliares"></div>
+    <!-- MATRICES DINÁMICAS (TABLAS) -->
+    <div id="contenedor-tablas" style="display: flex; flex-direction: column; gap: 20px;"></div>
 
   </div>
 
@@ -78,109 +133,63 @@
     ];
 
     const actividades = ["Inventario", "Limpieza", "Etiquetado", "Surtido"];
+    const CLAVE_SUPERVISOR = "1234"; // Define aquí la clave de acceso del Supervisor
 
-let registros = [];
-try {
-  const guardados = localStorage.getItem('tienda_reg_final');
-  if (guardados) registros = JSON.parse(guardados);
-} catch (e) { console.log("Error en registros"); }
+    let registros = [];
+    let informesSemanales = [];
+    let usuarioLogueado = null; // Guarda quién está usando la app
 
-let notificaciones = [];
-try {
-  const notifGuardadas = localStorage.getItem('tienda_not_final');
-  if (notifGuardadas) notificaciones = JSON.parse(notifGuardadas);
-} catch (e) { console.log("Error en notificaciones"); }
+    // Carga inicial y segura desde la memoria del celular
+    try {
+      const reg = localStorage.getItem('t_reg_v5'); if (reg) registros = JSON.parse(reg);
+      const inf = localStorage.getItem('t_inf_v5'); if (inf) informesSemanales = JSON.parse(inf);
+    } catch(e) { console.log(e); }
 
-    function guardar() {
-      localStorage.setItem('tienda_reg_final', JSON.stringify(registros));
-      localStorage.setItem('tienda_not_final', JSON.stringify(notificaciones));
+    function evaluarRolLogin() {
+      const usuario = document.getElementById('login-usuario').value;
+      const boxPass = document.getElementById('box-password');
+      if (usuario === "Supervisor") {
+        boxPass.classList.remove('hidden');
+      } else {
+        boxPass.classList.add('hidden');
+      }
+    }
+
+    function ingresarSistema() {
+      const usuario = document.getElementById('login-usuario').value;
+      if (usuario === "Supervisor") {
+        const pass = document.getElementById('login-pass').value;
+        if (pass !== CLAVE_SUPERVISOR) {
+          alert("Contraseña de Supervisor incorrecta.");
+          return;
+        }
+      }
+      usuarioLogueado = usuario;
+      document.getElementById('view-login').classList.add('hidden');
+      document.getElementById('view-app').classList.remove('hidden');
+      document.getElementById('txt-usuario-nav').innerText = usuarioLogueado === "Supervisor" ? "👔 Supervisor" : "👤 " + usuarioLogueado;
+      
+      // Limpiar input contraseña
+      document.getElementById('login-pass').value = "";
       renderizar();
     }
 
-    function marcarActividad(auxiliar, area, actividad) {
+    function cerrarSesion() {
+      usuarioLogueado = null;
+      document.getElementById('view-app').classList.add('hidden');
+      document.getElementById('view-login').classList.remove('hidden');
+    }
+
+    function verificarReinicioLunes() {
       const hoy = new Date();
-      const horaStr = hoy.toLocaleTimeString();
-      
-      const idx = registros.findIndex(r => r.auxiliar === auxiliar && r.area === area && r.actividad === actividad);
-      
-      if (idx !== -1) {
-        registros.splice(idx, 1);
-      } else {
-        registros.push({ auxiliar, area, actividad });
-        notificaciones.unshift({
-          mensaje: "✅ " + auxiliar + " hizo " + actividad + " en " + area,
-          hora: horaStr
-        });
-      }
-      guardar();
-    }
+      if (hoy.getDay() === 1) { // Lunes
+        const ultReinicio = localStorage.getItem('t_reinicio_v5');
+        const hoyTexto = hoy.toLocaleDateString();
 
-    function renderizar() {
-      document.getElementById('total-global').innerText = registros.length;
-
-      // Render de Notificaciones
-      const cNotif = document.getElementById('contenedor-notificaciones');
-      if (notificaciones.length === 0) {
-        cNotif.innerHTML = '<p style="color: #94a3b8; font-size: 12px;">Aún no hay actividades registradas.</p>';
-      } else {
-        let htmlNotif = "";
-        for (let i = 0; i < Math.min(notificaciones.length, 4); i++) {
-          htmlNotif += "<div class='notif-item'>" + notificaciones[i].mensaje + " <span style='color: #94a3b8; font-weight: normal;'>(" + notificaciones[i].hora + ")</span></div>";
-        }
-        cNotif.innerHTML = htmlNotif;
-      }
-
-      // Render de Tarjetas de Progreso
-      let htmlCards = "";
-      auxiliares.forEach(aux => {
-        const realizadas = registros.filter(r => r.auxiliar === aux.nombre).length;
-        const totales = aux.areas.length * actividades.length;
-        const porc = totales > 0 ? Math.round((realizadas / totales) * 100) : 0;
-
-        htmlCards += "<div class='tarjeta-auxiliar'>" +
-          "<h3 style='font-size: 14px; font-weight: bold;'>👤 " + aux.nombre + "</h3>" +
-          "<p style='font-size: 20px; font-weight: 800; margin-top: 5px;'>" + realizadas + " <span style='font-size: 11px; color: #94a3b8; font-weight: normal;'>/ " + totales + "</span></p>" +
-          "<div class='barra-bg'><div class='barra-progreso' style='width:" + porc + "%'></div></div>" +
-          "<p style='font-size: 10px; color: #64748b; font-weight: bold; margin-top: 4px; text-transform: uppercase;'>" + porc + "% Completado</p>" +
-          "</div>";
-      });
-      document.getElementById('grid-auxiliares').innerHTML = htmlCards;
-
-      // Render Estricto de Tablas Matriz
-      let htmlTablas = "";
-      auxiliares.forEach(aux => {
-        let tabla = "<div class='tabla-bloque'>" +
-          "<div class='tabla-titulo'>Matriz de Control: " + aux.nombre + "</div>" +
-          "<div class='tabla-scroll'><table>" +
-          "<thead><tr><th class='columna-area'>Área Específica</th>";
-        
-        actividades.forEach(act => {
-          tabla += "<th>" + act + "</th>";
-        });
-        tabla += "</tr></thead><tbody>";
-
-        aux.areas.forEach(area => {
-          tabla += "<tr><td class='columna-area'>" + area + "</td>";
-          
-          actividades.forEach(act => {
-            const hecho = registros.some(r => r.auxiliar === aux.nombre && r.area === area && r.actividad === act);
-            const claseBtn = hecho ? "btn-marcar btn-hecho" : "btn-marcar btn-pendiente";
-            const textoBtn = hecho ? "✓" : "+";
-
-            tabla += "<td>" +
-              "<button onclick=\"marcarActividad('" + aux.nombre + "', '" + area + "', '" + act + "')\" class='" + claseBtn + "'>" + textoBtn + "</button>" +
-              "</td>";
-          });
-          tabla += "</tr>";
-        });
-
-        tabla += "</tbody></table></div></div>";
-        htmlTablas += tabla;
-      });
-      document.getElementById('tablas-auxiliares').innerHTML = htmlTablas;
-    }
-
-    renderizar();
-  </script>
-</body>
-</html>
+        if (ultReinicio !== hoyTexto && registros.length > 0) {
+          const detalle = auxiliares.map(aux => {
+            const tot = aux.areas.length * actividades.length;
+            const real = registros.filter(r => r.auxiliar === aux.nombre).length;
+return { auxiliar: aux.nombre, realizadas: real, total: tot };});informesSemanales.unshift({ id: Date.now(), fecha: hoyTexto, detalle: detalle, datosRaw: [...registros] });registros = [];localStorage.setItem('t_reinicio_v5', hoyTexto);localStorage.removeItem('t_reg_v5');localStorage.setItem('t_inf_v5', JSON.stringify(informesSemanales));}}}function marcarActividad(auxiliar, area, actividad) {// Bloqueo: El auxiliar solo puede marcar tareas en SU panel privadoif (usuarioLogueado !== "Supervisor" && usuarioLogueado !== auxiliar) {alert("Acceso denegado: No puedes modificar las tareas de otro auxiliar.");return;}const idx = registros.findIndex(r => r.auxiliar === auxiliar && r.area === area && r.actividad === actividad);if (idx !== -1) {registros.splice(idx, 1);} else {registros.push({ auxiliar, area, actividad });}try {localStorage.setItem('t_reg_v5', JSON.stringify(registros));} catch(e) {}renderizar();}function descargarCSV(nombre, filas) {let csv = "data:text/csv;charset=utf-8,\uFEFF";filas.forEach(f => { csv += f.map(c => "${c}").join(",") + "\r\n"; });const uri = encodeURI(csv);const link = document.createElement("a");link.setAttribute("href", uri);link.setAttribute("download", nombre);document.body.appendChild(link); link.click(); document.body.removeChild(link);}function exportarExcelActual() {if (registros.length === 0) return alert("No hay registros en la semana actual.");const filas = [["Auxiliar", "Área", "Actividad"]];registros.forEach(r => filas.push([r.auxiliar, r.area, r.actividad]));descargarCSV("Reporte_Actual_" + new Date().toLocaleDateString() + ".csv", filas);}function exportarHistorico(id) {const inf = informesSemanales.find(i => i.id === id);if (!inf) return;const filas = [["Auxiliar", "Área", "Actividad"]];inf.datosRaw.forEach(r => filas.push([r.auxiliar, r.area, r.actividad]));descargarCSV("Reporte_Cierre_" + inf.fecha + ".csv", filas);}function renderizar() {verificarReinicioLunes();const pSup = document.getElementById('panel-supervisor');const pAux = document.getElementById('panel-auxiliar');// Ocultar y mostrar paneles según el Rol logueadoif (usuarioLogueado === "Supervisor") {pSup.classList.remove('hidden');pAux.classList.add('hidden');// Render de barras de todos para el Supervisorlet htmlSupGrid = "";auxiliares.forEach(aux => {const real = registros.filter(r => r.auxiliar === aux.nombre).length;const tot = aux.areas.length * actividades.length;const porc = tot > 0 ? Math.round((real / tot) * 100) : 0;htmlSupGrid += <div style="background:#f8fafc; padding:12px; border-radius:12px; border:1px solid #e2e8f0;"> <div style="display:flex; justify-content:space-between; font-size:12px; font-weight:bold;"><span>👤 ${aux.nombre}</span><span>${porc}%</span></div> <div class="barra-bg"><div class="barra-fill" style="width:${porc}%;"></div></div> <p style="font-size:11px; color:#64748b; margin-top:4px;">Completadas: ${real} de ${tot}</p> </div>;});document.getElementById('sup-grid-progreso').innerHTML = htmlSupGrid;// Render de Cierres de informes pasadosconst cHist = document.getElementById('sup-contenedor-historial');if (informesSemanales.length === 0) {cHist.innerHTML = <p style="color:#94a3b8; font-size:12px; text-align:center; padding:10px;">No hay reportes archivados todavía.</p>;} else {cHist.innerHTML = informesSemanales.map(inf => <div class="historial-row"> <span>📅 Cierre Semana: <strong>${inf.fecha}</strong></span> <button onclick="exportarHistorico(${inf.id})" class="btn btn-gray" style="padding:4px 8px; font-size:11px;">Excel 📥</button> </div>).join('');}} else {// Modo Auxiliar IndividualpSup.classList.add('hidden');pAux.classList.remove('hidden');const auxData = auxiliares.find(a => a.nombre === usuarioLogueado);const real = registros.filter(r => r.auxiliar === usuarioLogueado).length;const tot = auxData.areas.length * actividades.length;const porc = tot > 0 ? Math.round((real / tot) * 100) : 0;document.getElementById('aux-txt-avance').innerText = real + " / " + tot + " Tareas";document.getElementById('aux-txt-porc').innerText = porc + "%";document.getElementById('aux-barra-fill').style.width = porc + "%";}// RENDER FILTRADO DE MATRICES (TABLAS)const cTablas = document.getElementById('contenedor-tablas');cTablas.innerHTML = "";auxiliares.forEach(aux => {// Si no es supervisor y el nombre de la tabla no es el suyo, se la oculta por completoif (usuarioLogueado !== "Supervisor" && usuarioLogueado !== aux.nombre) return;let htmlTabla = <div class="tabla-bloque"> <div class="tabla-head"> <span>📋 Matriz de Actividades: ${aux.nombre}</span> <span style="font-size:11px; background:rgba(255,255,255,0.2); padding:2px 8px; border-radius:4px;">Asignada</span> </div> <div class="tabla-scroll"><table> <thead><tr><th class="td-area">Área</th>;actividades.forEach(act => { htmlTabla += <th>${act}</th>; });htmlTabla += </tr></thead><tbody>;aux.areas.forEach(area => {htmlTabla += <tr><td class="td-area">${area}</td>;actividades.forEach(act => {const hecho = registros.some(r => r.auxiliar === aux.nombre && r.area === area && r.actividad === act);const claseBtn = hecho ? "btn-check btn-hecho" : "btn-check btn-pendiente";htmlTabla += <td> <button onclick="marcarActividad('${aux.nombre}', '${area}', '${act}')" class="${claseBtn}">${hecho ? '✓' : '+'}</button> </td>;});htmlTabla += </tr>;});htmlTabla += </tbody></table></div></div>;cTablas.innerHTML += htmlTabla;});}### 🔑 Datos de Acceso por Defecto:
+* **Para los Auxiliares:** Seleccionan su nombre y entran directo sin clave.
+* **Para el Supervisor:** Selecciona "Supervisor General" y escribe la clave **`1234`** (puedes cambiarla en la línea 104 del código si necesitas otra).
