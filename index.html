@@ -1,452 +1,202 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { Bell, CheckCircle2, ClipboardList, User } from "lucide-react";
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Seguimiento Digital Tienda</title>
+  <script src="https://tailwindcss.com"></script>
+  <style>
+    * { box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; }
+    body { background-color: #f1f5f9; padding: 24px; min-height: 100vh; }
+    .scroll-custom::-webkit-scrollbar { width: 6px; height: 6px; }
+    .scroll-custom::-webkit-scrollbar-track { background: #f1f5f9; }
+    .scroll-custom::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+  </style>
+</head>
+<body>
 
-export default function SeguimientoDigitalTienda() {
-  const auxiliares = [
-    {
-      nombre: "Auxiliar 1",
-      areas: [
-        "Gaseosas",
-        "Jugos",
-        "Agua",
-        "Alternativas 1",
-        "Botanas 1",
-        "Semillas"
-      ]
-    },
-    {
-      nombre: "Auxiliar 2",
-      areas: [
-        "Sopas",
-        "Check Out",
-        "Bomboneras",
-        "Desayunos",
-        "Botanas 2",
-        "HYH"
-      ]
-    },
-    {
-      nombre: "Auxiliar 3",
-      areas: [
-        "Abarrotes",
-        "Galletas",
-        "Repostería",
-        "Dulces",
-        "Botanas 3"
-      ]
-    },
-    {
-      nombre: "Auxiliar 4",
-      areas: [
-        "Alternativas 2",
-        "Colombina",
-        "Cream Helado",
-        "Koska",
-        "Brikets + Cueros + SIM Card"
-      ]
-    }
-  ];
-
-  const actividades = [
-    "Inventario",
-    "Limpieza",
-    "Etiquetado",
-    "Surtido"
-  ];
-
-  const [registros, setRegistros] = useState([]);
-  const [notificaciones, setNotificaciones] = useState([]);
-  const [informesSemanales, setInformesSemanales] = useState([]);
-
-  useEffect(() => {
-    const hoy = new Date();
-    const esLunes = hoy.getDay() === 1;
-
-    if (esLunes) {
-      const informe = auxiliares.map((auxiliar) => {
-        const actividadesTotales = auxiliar.areas.length * actividades.length;
-
-        const realizadas = registros.filter(
-          (r) => r.auxiliar === auxiliar.nombre
-        ).length;
-
-        const pendientes = actividadesTotales - realizadas;
-
-        return {
-          auxiliar: auxiliar.nombre,
-          realizadas,
-          pendientes,
-          total: actividadesTotales
-        };
-      });
-
-      if (registros.length > 0) {
-        setInformesSemanales((prev) => [
-          {
-            fecha: hoy.toLocaleDateString(),
-            detalle: informe,
-            id: Date.now()
-          },
-          ...prev
-        ]);
-      }
-
-      setRegistros([]);
-
-      setNotificaciones([
-        {
-          mensaje:
-            "🔄 Reinicio semanal realizado. Las actividades fueron desbloqueadas.",
-          fecha: hoy.toLocaleDateString(),
-          hora: hoy.toLocaleTimeString(),
-          id: Date.now()
-        }
-      ]);
-    }
-  }, []);
-
-  const marcarActividad = (auxiliar, area, actividad) => {
-    const hora = new Date().toLocaleTimeString();
-    const fecha = new Date().toLocaleDateString();
-
-    const nuevoRegistro = {
-      auxiliar,
-      area,
-      actividad,
-      fecha,
-      hora,
-      id: Date.now()
-    };
-
-    setRegistros((prev) => [...prev, nuevoRegistro]);
-
-    setNotificaciones((prev) => [
-      {
-        mensaje: ${auxiliar} realizó ${actividad} en ${area},
-        fecha,
-        hora,
-        id: Date.now() + Math.random()
-      },
-      ...prev
-    ]);
-  };
-
-  const totalActividades = registros.length;
-
-  const resumenAuxiliares = useMemo(() => {
-    return auxiliares.map((auxiliar) => {
-      const realizadas = registros.filter(
-        (r) => r.auxiliar === auxiliar.nombre
-      ).length;
-
-      return {
-        nombre: auxiliar.nombre,
-        realizadas
-      };
-    });
-  }, [registros]);
-
-  return (
-    <div className="min-h-screen bg-slate-100 p-6">
-      <div className="max-w-7xl mx-auto">
-        <div className="grid lg:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white rounded-3xl shadow-lg p-6">
-            <div className="flex items-center gap-4 mb-4">
-              <div className="bg-blue-100 p-3 rounded-2xl">
-                <ClipboardList className="w-8 h-8 text-blue-700" />
-              </div>
-
-              <div>
-                <h2 className="text-2xl font-bold text-slate-800">
-                  Seguimiento Digital
-                </h2>
-                <p className="text-slate-500 text-sm">
-                  Control de actividades en tienda
-                </p>
-
-                <p className="text-xs text-blue-600 mt-1 font-medium">
-                  Reinicio automático cada lunes
-                </p>
-              </div>
-            </div>
-
-            <div className="bg-slate-100 rounded-2xl p-4 mt-4">
-              <p className="text-slate-500 text-sm">
-                Actividades Registradas
-              </p>
-
-              <p className="text-4xl font-bold text-slate-800 mt-2">
-                {totalActividades}
-              </p>
-            </div>
+  <div class="max-w-7xl mx-auto space-y-8">
+    
+    <!-- GRID SUPERIOR: SEGUIMIENTO Y NOTIFICACIONES -->
+    <div class="grid lg:grid-cols-3 gap-6">
+      
+      <!-- Panel de Control Principal -->
+      <div class="bg-white rounded-3xl shadow-lg p-6 flex flex-col justify-between">
+        <div class="flex items-center gap-4">
+          <div class="bg-blue-100 p-3 rounded-2xl text-blue-700">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
           </div>
-
-          <div className="bg-white rounded-3xl shadow-lg p-6 lg:col-span-2">
-            <div className="flex items-center gap-3 mb-5">
-              <Bell className="w-7 h-7 text-amber-500" />
-
-              <h2 className="text-2xl font-bold text-slate-800">
-                Notificaciones Supervisor
-              </h2>
-            </div>
-
-            <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
-              {notificaciones.length === 0 ? (
-                <div className="bg-slate-100 rounded-2xl p-4 text-slate-500 text-sm">
-                  Aún no hay actividades registradas.
-                </div>
-              ) : (
-                notificaciones.map((item) => (
-                  <div
-                    key={item.id}
-                    className="bg-amber-50 border border-amber-100 rounded-2xl p-4"
-                  >
-                    <p className="font-semibold text-slate-700">
-                      🔔 {item.mensaje}
-                    </p>
-
-                    <p className="text-sm text-slate-500 mt-1">
-                      {item.fecha} • {item.hora}
-                    </p>
-                  </div>
-                ))
-              )}
-            </div>
+          <div>
+            <h2 class="text-2xl font-bold text-slate-800">Seguimiento Digital</h2>
+            <p class="text-slate-500 text-sm">Control de actividades en tienda</p>
+            <p class="text-xs text-blue-600 mt-1 font-medium">Reinicio automático cada lunes</p>
           </div>
         </div>
-
-        <div className="grid lg:grid-cols-4 gap-6 mb-8">
-          {resumenAuxiliares.map((auxiliar) => (
-            <div
-              key={auxiliar.nombre}
-              className="bg-white rounded-3xl shadow-lg p-5"
-            >
-              <div className="flex items-center gap-3 mb-3">
-                <div className="bg-green-100 p-2 rounded-xl">
-                  <User className="w-5 h-5 text-green-700" />
-                </div>
-
-                <h3 className="font-bold text-slate-700">
-                  {auxiliar.nombre}
-                </h3>
-              </div>
-
-              <p className="text-sm text-slate-500">
-                Actividades completadas
-              </p>
-
-              <p className="text-3xl font-bold text-slate-800 mt-2">
-                {auxiliar.realizadas}
-              </p>
-            </div>
-          ))}
-        </div>
-
-        <div className="space-y-8">
-          {auxiliares.map((auxiliar) => (
-            <div
-              key={auxiliar.nombre}
-              className="bg-white rounded-3xl shadow-xl overflow-hidden"
-            >
-              <div className="bg-slate-800 text-white px-6 py-5">
-                <h2 className="text-2xl font-bold">
-                  👤 {auxiliar.nombre}
-                </h2>
-              </div>
-
-              <div className="overflow-x-auto">
-                <table className="w-full border-collapse text-sm">
-                  <thead>
-                    <tr className="bg-slate-100 text-slate-700">
-                      <th className="border p-4 text-left">Área</th>
-                      {actividades.map((actividad) => (
-                        <th
-                          key={actividad}
-                          className="border p-4 text-center"
-                        >
-                          {actividad}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-
-                  <tbody>
-                    {auxiliar.areas.map((area) => (
-                      <tr key={area} className="hover:bg-slate-50">
-                        <td className="border p-4 font-semibold text-slate-700">
-                          {area}
-                        </td>
-
-                        {actividades.map((actividad) => {
-                          const completada = registros.some(
-                            (r) =>
-                              r.auxiliar === auxiliar.nombre &&
-                              r.area === area &&
-                              r.actividad === actividad
-                          );
-
-                          return (
-                            <td
-                              key={actividad}
-                              className="border p-4 text-center"
-                            >
-                              <button
-                                onClick={() =>
-                                  marcarActividad(
-                                    auxiliar.nombre,
-                                    area,
-                                    actividad
-                                  )
-                                }
-                                disabled={completada}
-                                className={`px-4 py-2 rounded-xl font-semibold transition-all ${
-                                  completada
-                                    ? "bg-green-100 text-green-700 cursor-not-allowed"
-                                    : "bg-blue-600 hover:bg-blue-700 text-white"
-                                }`}
-                              >
-                                {completada ? (
-                                  <span className="flex items-center justify-center gap-2">
-                                    <CheckCircle2 className="w-4 h-4" />
-                                    Hecho
-                                  </span>
-                                ) : (
-                                  "Marcar"
-                                )}
-                              </button>
-                            </td>
-                          );
-                        })}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div className="bg-white rounded-3xl shadow-lg p-6 mt-10">
-          <h2 className="text-2xl font-bold text-slate-800 mb-5">
-            📊 Informes Semanales
-          </h2>
-
-          {informesSemanales.length === 0 ? (
-            <div className="bg-slate-100 rounded-2xl p-5 text-slate-500 mb-8">
-              Aún no hay informes generados.
-            </div>
-          ) : (
-            <div className="space-y-6 mb-10">
-              {informesSemanales.map((informe) => (
-                <div
-                  key={informe.id}
-                  className="border border-slate-200 rounded-2xl overflow-hidden"
-                >
-                  <div className="bg-slate-800 text-white px-5 py-4 flex justify-between items-center">
-                    <h3 className="text-xl font-bold">
-                      Informe Semanal
-                    </h3>
-
-                    <span className="text-sm">{informe.fecha}</span>
-                  </div>
-
-                  <div className="overflow-x-auto">
-                    <table className="w-full border-collapse text-sm">
-                      <thead>
-                        <tr className="bg-slate-100">
-                          <th className="border p-3">Auxiliar</th>
-                          <th className="border p-3">
-                            Actividades Cumplidas
-                          </th>
-                          <th className="border p-3">
-                            Actividades Pendientes
-                          </th>
-                          <th className="border p-3">Total</th>
-                        </tr>
-                      </thead>
-
-                      <tbody>
-                        {informe.detalle.map((item) => (
-                          <tr key={item.auxiliar}>
-                            <td className="border p-3 font-medium">
-                              {item.auxiliar}
-                            </td>
-
-                            <td className="border p-3 text-center text-green-700 font-bold">
-                              {item.realizadas}
-                            </td>
-
-                            <td className="border p-3 text-center text-red-600 font-bold">
-                              {item.pendientes}
-                            </td>
-
-                            <td className="border p-3 text-center">
-                              {item.total}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <div className="bg-white rounded-3xl shadow-lg p-6 mt-10">
-          <h2 className="text-2xl font-bold text-slate-800 mb-5">
-            📋 Historial de Actividades
-          </h2>
-
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-sm">
-              <thead>
-                <tr className="bg-slate-100 text-slate-700">
-                  <th className="border p-3">Auxiliar</th>
-                  <th className="border p-3">Área</th>
-                  <th className="border p-3">Actividad</th>
-                  <th className="border p-3">Fecha</th>
-                  <th className="border p-3">Hora</th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {registros.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan={5}
-                      className="border p-6 text-center text-slate-500"
-                    >
-                      No hay actividades registradas.
-                    </td>
-                  </tr>
-                ) : (
-                  registros.map((registro) => (
-                    <tr key={registro.id}>
-                      <td className="border p-3">
-                        {registro.auxiliar}
-                      </td>
-
-                      <td className="border p-3">{registro.area}</td>
-
-                      <td className="border p-3">
-                        {registro.actividad}
-                      </td>
-
-                      <td className="border p-3">
-                        {registro.fecha}
-                      </td>
-
-                      <td className="border p-3">{registro.hora}</td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+        <div class="bg-slate-100 rounded-2xl p-4 mt-6">
+          <p class="text-slate-500 text-sm font-medium">Actividades Registradas</p>
+          <p id="total-global" class="text-4xl font-bold text-slate-800 mt-2">0</p>
         </div>
       </div>
+
+      <!-- Panel de Notificaciones -->
+      <div class="bg-white rounded-3xl shadow-lg p-6 lg:col-span-2">
+        <div class="flex items-center gap-3 mb-5 text-amber-500">
+          <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+          <h2 class="text-2xl font-bold text-slate-800">Notificaciones Supervisor</h2>
+        </div>
+        <div id="contenedor-notificaciones" class="space-y-3 max-h-48 overflow-y-auto pr-2 scroll-custom">
+          <!-- Dinámico -->
+        </div>
+      </div>
+
     </div>
-  );
-}
+
+    <!-- TARJETAS DE RENDIMIENTO INDIVIDUAL (AVANCE EXCLUSIVO) -->
+    <div id="grid-auxiliares" class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <!-- Dinámico -->
+    </div>
+
+    <!-- TABLAS DE CONTROL POR AUXILIAR -->
+    <div id="tablas-auxiliares" class="space-y-8">
+      <!-- Dinámico -->
+    </div>
+
+  </div>
+
+  <script>
+    // Tu Estructura de Datos Fiel del Código React
+    const auxiliares = [
+      { nombre: "Auxiliar 1", areas: ["Gaseosas", "Jugos", "Agua", "Alternativas 1", "Botanas 1", "Semillas"] },
+      { nombre: "Auxiliar 2", areas: ["Sopas", "Check Out", "Bomboneras", "Desayunos", "Botanas 2", "HYH"] },
+      { nombre: "Auxiliar 3", areas: ["Abarrotes", "Galletas", "Repostería", "Dulces", "Botanas 3"] },
+      { nombre: "Auxiliar 4", areas: ["Alternativas 2", "Colombina", "Cream Helado", "Koska", "Brikets + Cueros + SIM Card"] }
+    ];
+
+    const actividades = ["Inventario", "Limpieza", "Etiquetado", "Surtido"];
+
+    // Base de datos en memoria local para persistencia real
+    let registros = JSON.parse(localStorage.getItem('tienda_registros')) || [];
+    let notificaciones = JSON.parse(localStorage.getItem('tienda_notificaciones')) || [];
+
+    // Lógica Automática de Lunes (Efecto useEffect de tu código)
+    function verificarReinicioLunes() {
+      const hoy = new Date();
+      if (hoy.getDay() === 1) { // 1 = Lunes
+        const ultimaFechaReinicio = localStorage.getItem('ultimo_reinicio');
+        const fechaHoyTexto = hoy.toLocaleDateString();
+
+        if (ultimaFechaReinicio !== fechaHoyTexto && registros.length > 0) {
+          registros = [];
+          notificaciones = [{
+            mensaje: "🔄 Reinicio semanal realizado. Las actividades fueron desbloqueadas.",
+            fecha: fechaHoyTexto,
+            hora: hoy.toLocaleTimeString(),
+            id: Date.now()
+          }];
+          localStorage.setItem('ultimo_reinicio', fechaHoyTexto);
+          guardarLocalStorage();
+        }
+      }
+    }
+
+    function guardarLocalStorage() {
+      localStorage.setItem('tienda_registros', JSON.stringify(registros));
+      localStorage.setItem('tienda_notificaciones', JSON.stringify(notificaciones));
+    }
+
+    // Completar el fragmento faltante de tu función "marcarActividad"
+    function marcarActividad(auxiliar, area, actividad) {
+      const hoy = new Date();
+      const fecha = hoy.toLocaleDateString();
+      const hora = hoy.toLocaleTimeString();
+
+      // Verificar si ya existe para no duplicar clicks accidentales
+      const yaExiste = registros.some(r => r.auxiliar === auxiliar && r.area === area && r.actividad === actividad);
+      
+      if (yaExiste) {
+        // Lógica de desmarcar opcional (Inverso del check)
+        registros = registros.filter(r => !(r.auxiliar === auxiliar && r.area === area && r.actividad === actividad));
+      } else {
+        registros.push({ auxiliar, area, actividad, fecha, hora, id: Date.now() });
+        notificaciones.unshift({
+          mensaje: `✅ ${auxiliar} realizó ${actividad} en ${area}`,
+          fecha, hora, id: Date.now() + Math.random()
+        });
+      }
+
+      guardarLocalStorage();
+      renderizar();
+    }
+
+    function renderizar() {
+      verificarReinicioLunes();
+
+      // 1. Indicador global
+      document.getElementById('total-global').innerText = registros.length;
+
+      // 2. Notificaciones
+      const contNotif = document.getElementById('contenedor-notificaciones');
+      if (notificaciones.length === 0) {
+        contNotif.innerHTML = `<div class="bg-slate-50 border rounded-2xl p-4 text-slate-500 text-sm text-center">Aún no hay actividades registradas.</div>`;
+      } else {
+        contNotif.innerHTML = notificaciones.map(item => `
+          <div class="bg-amber-50 border border-amber-100 rounded-2xl p-3">
+            <p class="font-semibold text-slate-700 text-sm">${item.mensaje}</p>
+            <p class="text-[11px] text-slate-400 mt-1">${item.fecha} • ${item.hora}</p>
+          </div>
+        `).join('');
+      }
+
+      // 3. Tarjetas de Rendimiento e Informes de Avance
+      const gridAux = document.getElementById('grid-auxiliares');
+      gridAux.innerHTML = auxiliares.map(auxiliar => {
+        const realizadas = registros.filter(r => r.auxiliar === auxiliar.nombre).length;
+        const totalesPosibles = auxiliar.areas.length * actividades.length;
+        const porcentaje = totalesPosibles > 0 ? Math.round((realizadas / totalesPosibles) * 100) : 0;
+
+        return `
+          <div class="bg-white rounded-3xl shadow-md p-5 border border-slate-100 flex flex-col justify-between">
+            <div>
+              <div class="flex items-center gap-3 mb-3">
+                <div class="bg-green-100 p-2 rounded-xl text-green-700">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                </div>
+                <h3 class="font-bold text-slate-700">${auxiliar.nombre}</h3>
+              </div>
+              <p class="text-xs text-slate-400 font-medium">Progreso del Auxiliar</p>
+              <p class="text-3xl font-extrabold text-slate-800 mt-1">${realizadas} <span class="text-xs text-slate-400 font-normal">/ ${totalesPosibles}</span></p>
+            </div>
+            <div class="mt-4">
+              <div class="flex justify-between text-[10px] font-bold text-slate-400 mb-1">
+                <span>AVANCE</span><span>${porcentaje}%</span>
+              </div>
+              <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                <div class="bg-green-500 h-full transition-all duration-300" style="width: ${porcentaje}%"></div>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      // 4. Tablas y Matrices Completas con el cierre lógico que le faltaba a tu React
+      const tablaContainer = document.getElementById('tablas-auxiliares');
+      tablaContainer.innerHTML = auxiliares.map(auxiliar => {
+        
+        const encabezaTabla = `
+          <div class="bg-white rounded-3xl shadow-xl overflow-hidden border border-slate-200">
+            <div class="bg-slate-800 text-white px-6 py-4 flex justify-between items-center">
+              <h2 class="text-xl font-bold">👤 ${auxiliar.nombre}</h2>
+              <span class="text-xs bg-slate-700 text-slate-300 px-3 py-1 rounded-full font-medium">Matriz de Trabajo</span>
+            </div>
+            <div class="overflow-x-auto scroll-custom">
+              <table class="w-full border-collapse text-sm">
+                <thead>
+                  <tr class="bg-slate-50 text-slate-600 border-b border-slate-200">
+                    <th class="p-4 text-left font-bold tracking-wide">Área Específica</th>
+                    ${actividades.map(act => `<th class="p-4 text-center font-bold tracking-wide">\${act}</th>`).join('')}
+                  </tr>
+                </thead>
+                <tbody>
+        `;
+
+        const filasTabla = auxiliar.areas.map(areaconst columnasActividades = actividades.map(actividad => {// Validación exacta basada en tu método .some()const completada = registros.some(r => r.auxiliar === auxiliar.nombre && r.area === area && r.actividad === actividad);const btnColor = completada? 'bg-green-500 text-white border-green-500 shadow-sm': 'bg-slate-50 border-slate-200 text-slate-300 hover:border-blue-500 hover:text-blue-500 hover:bg-blue-50';return <td class="p-3 text-center border-b border-slate-100"> <button onclick="marcarActividad('${auxiliar.nombre}', '${area}', '${actividad}')" class="mx-auto w-9 h-9 rounded-xl border flex items-center justify-center font-bold cursor-pointer transition-all active:scale-90 ${btnColor}"> ${completada ? '✓' : '+'} </button> </td>;}).join('');return <tr class="hover:bg-slate-50 transition-colors"> <td class="p-4 font-semibold text-slate-700 border-b border-slate-100 bg-slate-50/50">${area}</td> ${columnasActividades} </tr>;}).join('');const cierreTabla = </tbody> </table> </div> </div>;return encabezaTabla + filasTabla + cierreTabla;}).join('');}// Inicialización del Scriptrenderizar();
