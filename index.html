@@ -189,7 +189,32 @@
         if (ultReinicio !== hoyTexto && registros.length > 0) {
           const detalle = auxiliares.map(aux => {
             const tot = aux.areas.length * actividades.length;
-            const real = registros.filter(r => r.auxiliar === aux.nombre).length;
-return { auxiliar: aux.nombre, realizadas: real, total: tot };});informesSemanales.unshift({ id: Date.now(), fecha: hoyTexto, detalle: detalle, datosRaw: [...registros] });registros = [];localStorage.setItem('t_reinicio_v5', hoyTexto);localStorage.removeItem('t_reg_v5');localStorage.setItem('t_inf_v5', JSON.stringify(informesSemanales));}}}function marcarActividad(auxiliar, area, actividad) {// Bloqueo: El auxiliar solo puede marcar tareas en SU panel privadoif (usuarioLogueado !== "Supervisor" && usuarioLogueado !== auxiliar) {alert("Acceso denegado: No puedes modificar las tareas de otro auxiliar.");return;}const idx = registros.findIndex(r => r.auxiliar === auxiliar && r.area === area && r.actividad === actividad);if (idx !== -1) {registros.splice(idx, 1);} else {registros.push({ auxiliar, area, actividad });}try {localStorage.setItem('t_reg_v5', JSON.stringify(registros));} catch(e) {}renderizar();}function descargarCSV(nombre, filas) {let csv = "data:text/csv;charset=utf-8,\uFEFF";filas.forEach(f => { csv += f.map(c => "${c}").join(",") + "\r\n"; });const uri = encodeURI(csv);const link = document.createElement("a");link.setAttribute("href", uri);link.setAttribute("download", nombre);document.body.appendChild(link); link.click(); document.body.removeChild(link);}function exportarExcelActual() {if (registros.length === 0) return alert("No hay registros en la semana actual.");const filas = [["Auxiliar", "Área", "Actividad"]];registros.forEach(r => filas.push([r.auxiliar, r.area, r.actividad]));descargarCSV("Reporte_Actual_" + new Date().toLocaleDateString() + ".csv", filas);}function exportarHistorico(id) {const inf = informesSemanales.find(i => i.id === id);if (!inf) return;const filas = [["Auxiliar", "Área", "Actividad"]];inf.datosRaw.forEach(r => filas.push([r.auxiliar, r.area, r.actividad]));descargarCSV("Reporte_Cierre_" + inf.fecha + ".csv", filas);}function renderizar() {verificarReinicioLunes();const pSup = document.getElementById('panel-supervisor');const pAux = document.getElementById('panel-auxiliar');// Ocultar y mostrar paneles según el Rol logueadoif (usuarioLogueado === "Supervisor") {pSup.classList.remove('hidden');pAux.classList.add('hidden');// Render de barras de todos para el Supervisorlet htmlSupGrid = "";auxiliares.forEach(aux => {const real = registros.filter(r => r.auxiliar === aux.nombre).length;const tot = aux.areas.length * actividades.length;const porc = tot > 0 ? Math.round((real / tot) * 100) : 0;htmlSupGrid += <div style="background:#f8fafc; padding:12px; border-radius:12px; border:1px solid #e2e8f0;"> <div style="display:flex; justify-content:space-between; font-size:12px; font-weight:bold;"><span>👤 ${aux.nombre}</span><span>${porc}%</span></div> <div class="barra-bg"><div class="barra-fill" style="width:${porc}%;"></div></div> <p style="font-size:11px; color:#64748b; margin-top:4px;">Completadas: ${real} de ${tot}</p> </div>;});document.getElementById('sup-grid-progreso').innerHTML = htmlSupGrid;// Render de Cierres de informes pasadosconst cHist = document.getElementById('sup-contenedor-historial');if (informesSemanales.length === 0) {cHist.innerHTML = <p style="color:#94a3b8; font-size:12px; text-align:center; padding:10px;">No hay reportes archivados todavía.</p>;} else {cHist.innerHTML = informesSemanales.map(inf => <div class="historial-row"> <span>📅 Cierre Semana: <strong>${inf.fecha}</strong></span> <button onclick="exportarHistorico(${inf.id})" class="btn btn-gray" style="padding:4px 8px; font-size:11px;">Excel 📥</button> </div>).join('');}} else {// Modo Auxiliar IndividualpSup.classList.add('hidden');pAux.classList.remove('hidden');const auxData = auxiliares.find(a => a.nombre === usuarioLogueado);const real = registros.filter(r => r.auxiliar === usuarioLogueado).length;const tot = auxData.areas.length * actividades.length;const porc = tot > 0 ? Math.round((real / tot) * 100) : 0;document.getElementById('aux-txt-avance').innerText = real + " / " + tot + " Tareas";document.getElementById('aux-txt-porc').innerText = porc + "%";document.getElementById('aux-barra-fill').style.width = porc + "%";}// RENDER FILTRADO DE MATRICES (TABLAS)const cTablas = document.getElementById('contenedor-tablas');cTablas.innerHTML = "";auxiliares.forEach(aux => {// Si no es supervisor y el nombre de la tabla no es el suyo, se la oculta por completoif (usuarioLogueado !== "Supervisor" && usuarioLogueado !== aux.nombre) return;let htmlTabla = <div class="tabla-bloque"> <div class="tabla-head"> <span>📋 Matriz de Actividades: ${aux.nombre}</span> <span style="font-size:11px; background:rgba(255,255,255,0.2); padding:2px 8px; border-radius:4px;">Asignada</span> </div> <div class="tabla-scroll"><table> <thead><tr><th class="td-area">Área</th>;actividades.forEach(act => { htmlTabla += <th>${act}</th>; });htmlTabla += </tr></thead><tbody>;aux.areas.forEach(area => {htmlTabla += <tr><td class="td-area">${area}</td>;actividades.forEach(act => {const hecho = registros.some(r => r.auxiliar === aux.nombre && r.area === area && r.actividad === act);const claseBtn = hecho ? "btn-check btn-hecho" : "btn-check btn-pendiente";htmlTabla += <td> <button onclick="marcarActividad('${aux.nombre}', '${area}', '${act}')" class="${claseBtn}">${hecho ? '✓' : '+'}</button> </td>;});htmlTabla += </tr>;});htmlTabla += </tbody></table></div></div>;cTablas.innerHTML += htmlTabla;});}### 🔑 Datos de Acceso por Defecto:
-* **Para los Auxiliares:** Seleccionan su nombre y entran directo sin clave.
-* **Para el Supervisor:** Selecciona "Supervisor General" y escribe la clave **`1234`** (puedes cambiarla en la línea 104 del código si necesitas otra).
+            
+          return { auxiliar: aux.nombre, realizadas: real, total: tot };
+        });
+
+        informesSemanales.unshift({ id: Date.now(), fecha: hoyTexto, detalle: detalle, datosRaw: [...registros] });
+        registros = [];
+        localStorage.setItem('t_reinicio_v5', hoyTexto);
+        localStorage.removeItem('t_reg_v5');
+        localStorage.setItem('t_inf_v5', JSON.stringify(informesSemanales));
+      }
+    }
+  }
+
+  // Ejecución inicial automática de la app
+  inicializarApp = () => {
+    // Escuchar cambios en el selector para mostrar la clave
+    const select = document.getElementById('login-usuario');
+    if (select) {
+      select.addEventListener('change', evaluarRolLogin);
+    }
+    // Cargar visualización inicial
+    renderizar();
+  };
+
+  // Arrancar sistema
+  window.onload = inicializarApp;
+</script>
+</body>
+</html>
