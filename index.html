@@ -1,155 +1,25 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Seguimiento Digital Tienda</title>
- <script src="https://tailwindcss.com"></script>
-</head>
-<body class="bg-slate-100 p-4 md:p-6 font-sans min-h-screen text-slate-800">
-
-  <div class="max-w-7xl mx-auto space-y-8">
-    
-    <!-- ENCABEZADO PRINCIPAL -->
-    <div class="grid lg:grid-cols-3 gap-6">
-      <div class="bg-white rounded-3xl shadow-md p-6 flex flex-col justify-between border border-slate-200">
-        <div class="flex items-center gap-4">
-          <div class="bg-blue-100 p-3 rounded-2xl text-blue-700 font-bold text-xl">📋</div>
-          <div>
-            <h2 class="text-xl font-bold text-slate-800">Seguimiento Digital</h2>
-            <p class="text-slate-500 text-xs">Control de actividades en tienda</p>
-            <p class="text-[11px] text-blue-600 mt-1 font-semibold bg-blue-50 px-2 py-0.5 rounded">Reinicio automático: Lunes</p>
-          </div>
-        </div>
-        <div class="bg-slate-50 rounded-2xl p-4 mt-4 border border-slate-100">
-          <p class="text-slate-500 text-xs font-semibold uppercase tracking-wider">Actividades Registradas</p>
-          <p id="total-global" class="text-4xl font-black text-slate-800 mt-1">0</p>
-        </div>
-      </div>
-
-      <!-- NOTIFICACIONES -->
-      <div class="bg-white rounded-3xl shadow-md p-6 lg:col-span-2 border border-slate-200">
-        <div class="flex items-center gap-3 mb-4 text-amber-500 font-bold text-lg">
-          <span>🔔</span>
-          <h2 class="text-xl font-bold text-slate-800">Notificaciones Supervisor</h2>
-        </div>
-        <div id="contenedor-notificaciones" class="space-y-2 max-h-40 overflow-y-auto pr-2 text-xs text-slate-500">
-          Aún no hay actividades registradas.
-        </div>
-      </div>
-    </div>
-
-    <!-- RENDIMIENTO INDIVIDUAL -->
-    <div id="grid-auxiliares" class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6"></div>
-
-    <!-- TABLAS DE CONTROL -->
-    <div id="tablas-auxiliares" class="space-y-8"></div>
-
-  </div>
-
-  <script>
-    const auxiliares = [
-      { nombre: "Auxiliar 1", areas: ["Gaseosas", "Jugos", "Agua", "Alternativas 1", "Botanas 1", "Semillas"] },
-      { nombre: "Auxiliar 2", areas: ["Sopas", "Check Out", "Bomboneras", "Desayunos", "Botanas 2", "HYH"] },
-      { nombre: "Auxiliar 3", areas: ["Abarrotes", "Galletas", "Repostería", "Dulces", "Botanas 3"] },
-      { nombre: "Auxiliar 4", areas: ["Alternativas 2", "Colombina", "Cream Helado", "Koska", "Brikets + Cueros + SIM Card"] }
-    ];
-
-    const actividades = ["Inventario", "Limpieza", "Etiquetado", "Surtido"];
-
-    let registros = JSON.parse(localStorage.getItem('tienda_reg_v3')) || [];
-    let notificaciones = JSON.parse(localStorage.getItem('tienda_not_v3')) || [];
-
-    function guardar() {
-      localStorage.setItem('tienda_reg_v3', JSON.stringify(registros));
-      localStorage.setItem('tienda_not_v3', JSON.stringify(notificaciones));
-      renderizar();
-    }
-
-    function marcarActividad(auxiliar, area, actividad) {
-      const hoy = new Date();
-      const horaStr = hoy.toLocaleTimeString();
-      
-      const idx = registros.findIndex(r => r.auxiliar === auxiliar && r.area === area && r.actividad === actividad);
-      
-      if (idx !== -1) {
-        registros.splice(idx, 1);
-      } else {
-        registros.push({ auxiliar, area, actividad });
-        notificaciones.unshift({
-          mensaje: "✅ " + auxiliar + " hizo " + actividad + " en " + area,
-          hora: horaStr
-        });
-      }
-      guardar();
-    }
-
-    function renderizar() {
-      document.getElementById('total-global').innerText = registros.length;
-
-      // Render Notificaciones
-      const cNotif = document.getElementById('contenedor-notificaciones');
-      if (notificaciones.length === 0) {
-        cNotif.innerHTML = "Aún no hay actividades registradas.";
-      } else {
-        let htmlNotif = "";
-        for (let i = 0; i < Math.min(notificaciones.length, 5); i++) {
-          htmlNotif += "<div class='bg-amber-50 p-2 rounded border border-amber-100 mb-1'><strong>" + notificaciones[i].mensaje + "</strong> <span class='text-slate-400'>(" + notificaciones[i].hora + ")</span></div>";
-        }
-        cNotif.innerHTML = htmlNotif;
-      }
-
-      // Render Tarjetas de Progreso
-      let htmlCards = "";
-      auxiliares.forEach(aux => {
-        const realizadas = registros.filter(r => r.auxiliar === aux.nombre).length;
-        const totales = aux.areas.length * actividades.length;
-        const porc = totales > 0 ? Math.round((realizadas / totales) * 100) : 0;
-
-        htmlCards += "<div class='bg-white p-5 rounded-3xl shadow-md border border-slate-200'>" +
-          "<h3 class='font-bold text-slate-700 text-base'>👤 " + aux.nombre + "</h3>" +
-          "<p class='text-2xl font-black text-slate-800 mt-2'>" + realizadas + " <span class='text-xs text-slate-400 font-normal'>/ " + totales + "</span></p>" +
-          "<div class='w-full bg-slate-100 rounded-full h-2 mt-3 overflow-hidden'><div class='bg-green-500 h-full' style='width:" + porc + "%'></div></div>" +
-          "<p class='text-[10px] text-slate-400 font-bold mt-1'>" + porc + "% COMPLETADO</p>" +
-          "</div>";
-      });
-      document.getElementById('grid-auxiliares').innerHTML = htmlCards;
-
-      // Render Tablas Matriz
-      let htmlTablas = "";
-      auxiliares.forEach(aux => {
-        let tabla = "<div class='bg-white rounded-3xl shadow-md overflow-hidden border border-slate-200'>" +
-          "<div class='bg-slate-800 text-white px-6 py-3 font-bold text-base'>Auxiliar: " + aux.nombre + "</div>" +
-          "<div class='overflow-x-auto'><table class='w-full text-left text-xs'>" +
-          "<thead><tr class='bg-slate-50 border-b border-slate-200'><th class='p-3 font-bold text-slate-600'>Área</th>";
-        
-        actividades.forEach(act => {
-          tabla += "<th class='p-3 text-center font-bold text-slate-600'>" + act + "</th>";
-        });
-        tabla += "</tr></thead><tbody>";
-
-        aux.areas.forEach(area => {
-          tabla += "<tr class='hover:bg-slate-50'><td class='p-3 font-semibold text-slate-700 border-b border-slate-100'>" + area + "</td>";
-          
-          actividades.forEach(act => {
-            const hecho = registros.some(r => r.auxiliar === aux.nombre && r.area === area && r.actividad === act);
-            const claseBtn = hecho ? "bg-green-500 text-white border-green-500" : "bg-slate-100 text-slate-400 border-slate-200";
-            const textoBtn = hecho ? "✓" : "+";
-
-            tabla += "<td class='p-2 text-center border-b border-slate-100'>" +
-              "<button onclick=\"marcarActividad('" + aux.nombre + "', '" + area + "', '" + act + "')\" class='w-8 h-8 rounded-xl border font-bold text-xs cursor-pointer " + claseBtn + "'>" + textoBtn + "</button>" +
-              "</td>";
-          });
-          tabla += "</tr>";
-        });
-
-        tabla += "</tbody></table></div></div>";
-        htmlTablas += tabla;
-      });
-      document.getElementById('tablas-auxiliares').innerHTML = htmlTablas;
-    }
-
-    renderizar();
-  </script>
-</body>
-</html>
+<style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
+    body { background-color: #f1f5f9; padding: 24px; color: #1e293b; }
+    .max-w-7xl { max-width: 1280px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; }
+    .grid { display: grid; gap: 24px; }
+    @media (min-width: 1024px) { .lg\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); } .lg\:col-span-2 { grid-column: span 2 / span 2; } }
+    @media (min-width: 640px) { .sm\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); } .lg\:grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+    .bg-white { background-color: white; border-radius: 24px; padding: 24px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }
+    .flex { display: flex; } .items-center { align-items: center; } .gap-4 { gap: 16px; } .justify-between { justify-content: space-between; }
+    .bg-blue-100 { background-color: #dbeafe; padding: 12px; border-radius: 16px; font-size: 24px; }
+    .text-xl { font-size: 1.25rem; } .font-bold { font-weight: 700; } .text-slate-800 { color: #1e293b; } .text-slate-500 { color: #64748b; }
+    .bg-slate-50 { background-color: #f8fafc; padding: 16px; border-radius: 16px; margin-top: 16px; border: 1px solid #f1f5f9; }
+    .text-4xl { font-size: 2.25rem; } .font-black { font-weight: 900; }
+    .bg-amber-50 { background-color: #fef3c7; padding: 12px; border-radius: 8px; border: 1px solid #fde68a; margin-bottom: 8px; }
+    .w-full { width: 100%; } .bg-slate-100 { background-color: #f1f5f9; } .rounded-full { border-radius: 9999px; } .h-2 { height: 8px; } .overflow-hidden { overflow: hidden; }
+    .bg-green-500 { background-color: #22c55e; height: 100%; transition: width 0.3s; }
+    .overflow-x-auto { overflow-x: auto; } table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; }
+    th, td { padding: 12px; border-bottom: 1px solid #e2e8f0; } th { background-color: #f8fafc; color: #64748b; font-weight: 700; text-align: center; }
+    th:first-child, td:first-child { text-align: left; font-weight: 600; background-color: #f8fafc; }
+    .bg-slate-800 { background-color: #1e293b; color: white; padding: 16px 24px; font-weight: bold; border-top-left-radius: 24px; border-top-right-radius: 24px; }
+    .w-8 { width: 32px; } .h-8 { height: 32px; } .rounded-xl { border-radius: 12px; } .border { border: 1px solid #cbd5e1; }
+    .bg-green-500-btn { background-color: #22c55e; color: white; border-color: #22c55e; }
+    .bg-slate-100-btn { background-color: #f1f5f9; color: #94a3b8; }
+    button { cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-weight: bold; }
+  </style>
