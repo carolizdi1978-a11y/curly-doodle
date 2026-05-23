@@ -79,8 +79,17 @@
 
     const actividades = ["Inventario", "Limpieza", "Etiquetado", "Surtido"];
 
-    let registros = JSON.parse(localStorage.getItem('tienda_reg_final')) || [];
-    let notificaciones = JSON.parse(localStorage.getItem('tienda_not_final')) || [];
+let registros = [];
+try {
+  const guardados = localStorage.getItem('tienda_reg_final');
+  if (guardados) registros = JSON.parse(guardados);
+} catch (e) { console.log("Error en registros"); }
+
+let notificaciones = [];
+try {
+  const notifGuardadas = localStorage.getItem('tienda_not_final');
+  if (notifGuardadas) notificaciones = JSON.parse(notifGuardadas);
+} catch (e) { console.log("Error en notificaciones"); }
 
     function guardar() {
       localStorage.setItem('tienda_reg_final', JSON.stringify(registros));
