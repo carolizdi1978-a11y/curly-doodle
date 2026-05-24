@@ -3,17 +3,17 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sistema Control Tienda - MultiPanel</title>
+  <title>Sistema Control Tienda Cloud</title>
+  <!-- Cargamos la librería oficial de Supabase para conectar la app a internet -->
+  <script src="https://jsdelivr.net"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
     body { background-color: #f1f5f9; padding: 16px; color: #1e293b; min-height: 100vh; }
     .contenedor { max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
     
-    /* Login */
     .login-box { max-width: 400px; margin: 100px auto; background: white; padding: 30px; border-radius: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; text-align: center; }
     .select-input, .text-input { width: 100%; padding: 12px; margin: 15px 0; border-radius: 10px; border: 1px solid #cbd5e1; font-size: 14px; background: white; }
     
-    /* Componentes */
     .tarjeta { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.03); border: 1px solid #e2e8f0; }
     .nav-bar { display: flex; justify-content: space-between; align-items: center; background: #1e293b; color: white; padding: 14px 20px; border-radius: 16px; }
     
@@ -21,9 +21,8 @@
     .barra-bg { width: 100%; background: #e2e8f0; height: 8px; border-radius: 4px; overflow: hidden; margin-top: 8px; }
     .barra-fill { background: #22c55e; height: 100%; width: 0%; transition: width 0.3s ease; }
     
-    /* Tablas */
     .tabla-bloque { background: white; border-radius: 20px; overflow: hidden; border: 1px solid #e2e8f0; margin-top: 10px; }
-    .tabla-head { background: #334155; color: white; padding: 12px 20px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
+    .tabla-head { background: #334155; color: white; padding: 12px 20px; font-weight: bold; }
     .tabla-scroll { overflow-x: auto; }
     table { width: 100%; border-collapse: collapse; font-size: 13px; text-align: center; }
     th, td { padding: 12px; border-bottom: 1px solid #e2e8f0; }
@@ -31,11 +30,12 @@
     .td-area { text-align: left; font-weight: bold; background: #f8fafc; width: 220px; color: #334155; }
     
     .btn { background: #2563eb; color: white; border: none; padding: 10px 16px; border-radius: 10px; font-weight: bold; font-size: 13px; cursor: pointer; }
-    .btn-green { background: #16a34a; } .btn-red { background: #dc2626; } .btn-gray { background: #64748b; }
+    .btn-green { background: #16a34a; } .btn-gray { background: #64748b; }
     
-    .btn-check { width: 34px; height: 34px; border-radius: 8px; border: 1px solid #cbd5e1; font-weight: bold; cursor: pointer; }
-    .btn-hecho { background: #22c55e; color: white; border-color: #22c55e; }
+    .btn-check { width: 34px; height: 34px; border-radius: 8px; border: 1px solid #cbd5e1; font-weight: bold; cursor: pointer; transition: all 0.2s; }
+    .btn-hecho { background: #22c55e; color: white; border-color: #22c55e; cursor: not-allowed !important; }
     .btn-pendiente { background: #f8fafc; color: #94a3b8; }
+    .btn-solo-lectura { cursor: not-allowed !important; opacity: 0.8; }
     
     .hidden { display: none; }
     .historial-row { padding: 10px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
@@ -43,10 +43,10 @@
 </head>
 <body>
 
-  <!-- PANTALLA DE ACCESO (LOGIN) -->
+  <!-- PANTALLA DE LOGUEO -->
   <div id="view-login" class="login-box">
-    <h2 style="font-size: 22px; font-weight: 800; color: #1e293b;">Acceso al Sistema</h2>
-    <p style="color: #64748b; font-size: 13px; margin-top: 4px;">Selecciona tu usuario de tienda</p>
+    <h2 style="font-size: 22px; font-weight: 800; color: #1e293b;">Acceso a la Tienda</h2>
+    <p style="color: #64748b; font-size: 13px; margin-top: 4px;">Selecciona tu perfil de trabajo</p>
     
     <select id="login-usuario" onchange="evaluarRolLogin()" class="select-input">
       <option value="Auxiliar 1">👤 Auxiliar 1</option>
@@ -63,50 +63,46 @@
     <button onclick="ingresarSistema()" class="btn" style="width: 100%; padding: 12px; margin-top: 10px;">Ingresar al Panel</button>
   </div>
 
-  <!-- CONTENEDOR PRINCIPAL DE LA APP -->
+  <!-- CONTENEDOR DE LA APLICACIÓN -->
   <div id="view-app" class="contenedor hidden">
     
-    <!-- BARRA SUPERIOR DE SESIÓN -->
+    <!-- NAVEGACIÓN -->
     <div class="nav-bar">
       <div>
-        <span style="font-size: 12px; color: #94a3b8; display: block;">Usuario Activo:</span>
+        <span style="font-size: 12px; color: #94a3b8; display: block;">Sesión de hoy:</span>
         <strong id="txt-usuario-nav" style="font-size: 16px;">Nombre</strong>
       </div>
       <button onclick="cerrarSesion()" class="btn btn-gray" style="padding: 6px 12px; font-size: 11px;">Cerrar Sesión 🚪</button>
     </div>
 
-    <!-- PANEL EXCLUSIVO DEL SUPERVISOR -->
+    <!-- PANEL DEL SUPERVISOR -->
     <div id="panel-supervisor" class="space-y-6 hidden" style="display: flex; flex-direction: column; gap: 20px;">
-      
-      <!-- Cuadro de mandos y Descarga Global -->
       <div class="tarjeta" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
         <div>
           <h2 style="font-size: 18px; font-weight: bold;">Consola del Supervisor General</h2>
-          <p style="color: #64748b; font-size: 12px;">Auditoría completa de avances de la tienda</p>
+          <p style="color: #64748b; font-size: 12px;">Vista de solo lectura • Sincronización en tiempo real</p>
         </div>
         <button onclick="exportarExcelActual()" class="btn btn-green">Descargar Excel Semana Actual 📥</button>
       </div>
 
-      <!-- Progreso en vivo de todos los colaboradores -->
       <div class="tarjeta">
-        <h3 style="font-size: 14px; font-weight: bold; margin-bottom: 12px;">📈 Progreso General del Personal</h3>
+        <h3 style="font-size: 14px; font-weight: bold; margin-bottom: 12px;">📈 Monitoreo de Avance del Personal</h3>
         <div id="sup-grid-progreso" class="grid-supervisor"></div>
       </div>
 
-      <!-- Historial de informes archivados -->
       <div class="tarjeta">
         <h3 style="font-size: 14px; font-weight: bold; margin-bottom: 10px;">🗄️ Historial de Reportes Semanales (Cierres de Lunes)</h3>
         <div id="sup-contenedor-historial" style="max-height: 150px; overflow-y: auto;">
-          <p style="color: #94a3b8; font-size: 12px; text-align: center; padding: 10px;">No hay reportes semanales archivados aún.</p>
+          <p style="color: #94a3b8; font-size: 12px; text-align: center; padding: 10px;">Cargando historial...</p>
         </div>
       </div>
     </div>
 
-    <!-- PANEL EXCLUSIVO DEL AUXILIAR (RESUMEN PROPIO) -->
+    <!-- PANEL DEL AUXILIAR -->
     <div id="panel-auxiliar" class="tarjeta hidden" style="background: linear-gradient(135deg, #1e3a8a, #1e40af); color: white;">
       <div style="display: flex; justify-content: space-between; align-items: center;">
         <div>
-          <p style="font-size: 12px; color: #bfdbfe; font-weight: bold; tracking-wide: uppercase;">MI RENDIMIENTO DE LA SEMANA</p>
+          <p style="font-size: 12px; color: #bfdbfe; font-weight: bold;">MI PROGRESO INDIVIDUAL</p>
           <p style="font-size: 28px; font-weight: 900; margin-top: 4px;" id="aux-txt-avance">0 / 0</p>
         </div>
         <div style="text-align: right;">
@@ -119,12 +115,20 @@
       </div>
     </div>
 
-    <!-- MATRICES DINÁMICAS (TABLAS) -->
+    <!-- CONTENEDOR DE LAS TABLAS -->
     <div id="contenedor-tablas" style="display: flex; flex-direction: column; gap: 20px;"></div>
 
   </div>
 
   <script>
+    // URL fija de tu proyecto Supabase extraída de la foto
+    const SUPABASE_URL = "https://supabase.co";
+    // REEMPLAZA las siguientes letras por la clave Anon Key larga que copiaste en el Paso 1
+    const SUPABASE_ANON_KEY = "sb_publishable_TRw3PViir6aoMw6ZY_oygQ_DChbJJ1_";
+
+    // Conectamos la app formalmente con la librería en internet
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
     const auxiliares = [
       { nombre: "Auxiliar 1", areas: ["Gaseosas", "Jugos", "Agua", "Alternativas 1", "Botanas 1", "Semillas"] },
       { nombre: "Auxiliar 2", areas: ["Sopas", "Check Out", "Bomboneras", "Desayunos", "Botanas 2", "HYH"] },
@@ -133,41 +137,46 @@
     ];
 
     const actividades = ["Inventario", "Limpieza", "Etiquetado", "Surtido"];
-    const CLAVE_SUPERVISOR = "1234"; // Define aquí la clave de acceso del Supervisor
+    const CLAVE_SUPERVISOR = "1234";
 
-       let registros = [];
+    let registros = [];
     let informesSemanales = [];
     let usuarioLogueado = null;
 
-    try {
-      const reg = localStorage.getItem('t_reg_v5'); if (reg) registros = JSON.parse(reg);
-      const inf = localStorage.getItem('t_inf_v5'); if (inf) informesSemanales = JSON.parse(inf);
-    } catch(e) { console.log(e); }
+    async function descargarDatosCloud() {
+      try {
+        // Descargar tareas guardadas en internet por todos los auxiliares
+        let { data: regCloud, error: e1 } = await supabase.from('registros_tienda').select('*');
+        if (!e1 && regCloud) registros = regCloud;
+
+        // Descargar informes pasados guardados en la nube
+        let { data: infCloud, error: e2 } = await supabase.from('informes_semanales').select('*').order('id', { ascending: false });
+        if (!e2 && infCloud) informesSemanales = infCloud;
+      } catch (e) { console.error("Error descargando datos del servidor", e); }
+      renderizar();
+    }
 
     function evaluarRolLogin() {
       const usuario = document.getElementById('login-usuario').value;
       const boxPass = document.getElementById('box-password');
-      if (boxPass) {
-        if (usuario === "Supervisor") boxPass.classList.remove('hidden');
-        else boxPass.classList.add('hidden');
-      }
+      if (usuario === "Supervisor") boxPass.classList.remove('hidden');
+      else boxPass.classList.add('hidden');
     }
 
-    function ingresarSistema() {
+    async function ingresarSistema() {
       const usuario = document.getElementById('login-usuario').value;
       if (usuario === "Supervisor") {
         const pass = document.getElementById('login-pass').value;
-        if (pass !== CLAVE_SUPERVISOR) {
-          alert("Contraseña de Supervisor incorrecta.");
-          return;
-        }
+        if (pass !== CLAVE_SUPERVISOR) return alert("Contraseña incorrecta.");
       }
       usuarioLogueado = usuario;
       document.getElementById('view-login').classList.add('hidden');
       document.getElementById('view-app').classList.remove('hidden');
       document.getElementById('txt-usuario-nav').innerText = usuarioLogueado === "Supervisor" ? "👔 Supervisor" : "👤 " + usuarioLogueado;
       document.getElementById('login-pass').value = "";
-      renderizar();
+      
+      // Sincronizar datos con la nube antes de pintar la pantalla
+      await descargarDatosCloud();
     }
 
     function cerrarSesion() {
@@ -176,169 +185,5 @@
       document.getElementById('view-login').classList.remove('hidden');
     }
 
-      function verificarReinicioLunes() {
-      const hoy = new Date();
-      if (hoy.getDay() === 1) {
-        const ultReinicio = localStorage.getItem('t_reinicio_v5');
-        const hoyTexto = hoy.toLocaleDateString();
-
-        if (ultReinicio !== hoyTexto && registros.length > 0) {
-          const detalle = auxiliares.map(aux => {
-            const tot = aux.areas.length * actividades.length;
-            const real = registros.filter(r => r.auxiliar === aux.nombre).length;
-            return { auxiliar: aux.nombre, realizadas: real, total: tot };
-          });
-
-          informesSemanales.unshift({ id: Date.now(), fecha: hoyTexto, detalle: detalle, datosRaw: [...registros] });
-          registros = [];
-          localStorage.setItem('t_reinicio_v5', hoyTexto);
-          localStorage.removeItem('t_reg_v5');
-          localStorage.setItem('t_inf_v5', JSON.stringify(informesSemanales));
-        }
-      }
-    }
-
-    function marcarActividad(auxiliar, area, actividad) {
-      if (usuarioLogueado !== "Supervisor" && usuarioLogueado !== auxiliar) {
-        alert("Acceso denegado: No puedes modificar las tareas de otro auxiliar.");
-        return;
-      }
-
-      const idx = registros.findIndex(r => r.auxiliar === auxiliar && r.area === area && r.actividad === actividad);
-      if (idx !== -1) {
-        registros.splice(idx, 1);
-      } else {
-        registros.push({ auxiliar, area, actividad });
-      }
-
-      try { localStorage.setItem('t_reg_v5', JSON.stringify(registros)); } catch(e) {}
-      renderizar();
-    }
-
-    function descargarCSV(nombre, filas) {
-      let csv = "data:text/csv;charset=utf-8,\uFEFF";
-      filas.forEach(f => { csv += f.map(c => `"${c}"`).join(",") + "\r\n"; });
-      const uri = encodeURI(csv);
-      const link = document.createElement("a");
-      link.setAttribute("href", uri);
-      link.setAttribute("download", nombre);
-      document.body.appendChild(link); link.click(); document.body.removeChild(link);
-    }
-
-    function exportarExcelActual() {
-      if (registros.length === 0) return alert("No hay registros en la semana actual.");
-      const filas = [["Auxiliar", "Área", "Actividad"]];
-      registros.forEach(r => filas.push([r.auxiliar, r.area, r.actividad]));
-      descargarCSV("Reporte_Actual_" + new Date().toLocaleDateString() + ".csv", filas);
-    }
-
-    function exportarHistorico(id) {
-      const inf = informesSemanales.find(i => i.id === id);
-      if (!inf) return;
-      const filas = [["Auxiliar", "Área", "Actividad"]];
-      inf.datosRaw.forEach(r => filas.push([r.auxiliar, r.area, r.actividad]));
-      descargarCSV("Reporte_Cierre_" + inf.fecha + ".csv", filas);
-    }
-
-    function renderizar() {
-      verificarReinicioLunes();
-
-      const pSup = document.getElementById('panel-supervisor');
-      const pAux = document.getElementById('panel-auxiliar');
-      
-      if (usuarioLogueado === "Supervisor") {
-        if (pSup) pSup.style.display = "block";
-        if (pAux) pAux.style.display = "none";
-
-        let htmlSupGrid = "";
-        auxiliares.forEach(aux => {
-          const real = registros.filter(r => r.auxiliar === aux.nombre).length;
-          const tot = aux.areas.length * actividades.length;
-          const porc = tot > 0 ? Math.round((real / tot) * 100) : 0;
-          htmlSupGrid += `<div style="background:#f8fafc; padding:12px; border-radius:12px; border:1px solid #e2e8f0;">
-            <div style="display:flex; justify-content:space-between; font-size:12px; font-weight:bold;"><span>👤 ${aux.nombre}</span><span>${porc}%</span></div>
-            <div class="barra-bg"><div class="barra-fill" style="width:${porc}%;"></div></div>
-            <p style="font-size:11px; color:#64748b; margin-top:4px;">Completadas: ${real} de ${tot}</p>
-          </div>`;
-        });
-        const gridProgreso = document.getElementById('sup-grid-progreso');
-        if (gridProgreso) gridProgreso.innerHTML = htmlSupGrid;
-
-        const cHist = document.getElementById('sup-contenedor-historial');
-        if (cHist) {
-          if (informesSemanales.length === 0) {
-            cHist.innerHTML = `<p style="color:#94a3b8; font-size:12px; text-align:center; padding:10px;">No hay reportes archivados todavía.</p>`;
-          } else {
-            cHist.innerHTML = informesSemanales.map(inf => `
-              <div class="historial-row">
-                <span>📅 Cierre Semana: <strong>${inf.fecha}</strong></span>
-                <button onclick="exportarHistorico(${inf.id})" class="btn btn-gray" style="padding:4px 8px; font-size:11px;">Excel 📥</button>
-              </div>
-            `).join('');
-          }
-        }
-
-      } else {
-        if (pSup) pSup.style.display = "none";
-        if (pAux) pAux.style.display = "block";
-
-        const auxData = auxiliares.find(a => a.nombre === usuarioLogueado);
-        if (auxData) {
-          const real = registros.filter(r => r.auxiliar === usuarioLogueado).length;
-          const tot = auxData.areas.length * actividades.length;
-          const porc = tot > 0 ? Math.round((real / tot) * 100) : 0;
-
-          const txtAvance = document.getElementById('aux-txt-avance');
-          const txtPorc = document.getElementById('aux-txt-porc');
-          const barraFill = document.getElementById('aux-barra-fill');
-
-          if (txtAvance) txtAvance.innerText = real + " / " + tot + " Tareas";
-          if (txtPorc) txtPorc.innerText = porc + "%";
-          if (barraFill) barraFill.style.width = porc + "%";
-        }
-      }
-
-      const cTablas = document.getElementById('contenedor-tablas');
-      if (cTablas) {
-        cTablas.innerHTML = "";
-        auxiliares.forEach(aux => {
-          if (usuarioLogueado !== "Supervisor" && usuarioLogueado !== aux.nombre) return;
-
-          let htmlTabla = `<div class="tabla-bloque">
-            <div class="tabla-head">
-              <span>📋 Matriz de Actividades: ${aux.nombre}</span>
-            </div>
-            <div class="tabla-scroll"><table>
-              <thead><tr><th class="td-area">Área</th>`;
-          
-          actividades.forEach(act => { htmlTabla += `<th>${act}</th>`; });
-          htmlTabla += `</tr></thead><tbody>`;
-
-          aux.areas.forEach(area => {
-            htmlTabla += `<tr><td class="td-area">${area}</td>`;
-            actividades.forEach(act => {
-              const hecho = registros.some(r => r.auxiliar === aux.nombre && r.area === area && r.actividad === act);
-              const claseBtn = hecho ? "btn-check btn-hecho" : "btn-check btn-pendiente";
-              htmlTabla += `<td>
-                <button onclick="marcarActividad('${aux.nombre}', '${area}', '${act}')" class="${claseBtn}">${hecho ? '✓' : '+'}</button>
-              </td>`;
-            });
-            htmlTabla += `</tr>`;
-          });
-
-          htmlTabla += `</tbody></table></div></div>`;
-          cTablas.innerHTML += htmlTabla;
-        });
-      }
-    }
-
-    window.onload = function() {
-      const select = document.getElementById('login-usuario');
-      if (select) {
-        select.addEventListener('change', evaluarRolLogin);
-      }
-      renderizar();
-    };
-</script>
-</body>
-</html>
+    async function verificarReinicioLunes() {
+const hoy = new Date();if (hoy.getDay() === 1) { // Lunesconst ultReinicio = localStorage.getItem('t_cloud_reinicio_v5');const hoyTexto = hoy.toLocaleDateString();if (ultReinicio !== hoyTexto && registros.length > 0) {const detalle = auxiliares.map(aux => {const tot = aux.areas.length * actividades.length;const real = registros.filter(r => r.auxiliar === aux.nombre).length;return { auxiliar: aux.nombre, realizadas: real, total: tot };});// Guardar el consolidado semanal en la base de datos de internetawait supabase.from('informes_semanales').insert([{ fecha_cierre: hoyTexto, datos_json: registros }]);// Limpiar la tabla de registros en internet para iniciar la nueva semana en ceroawait supabase.from('registros_tienda').delete().neq('id', 0);localStorage.setItem('t_cloud_reinicio_v5', hoyTexto);await descargarDatosCloud();}}}async function marcarActividad(auxiliar, area, actividad) {// REGLA 2: Bloqueo estricto para el Supervisor (No puede marcar ni desmarcar)if (usuarioLogueado === "Supervisor") {alert("Acceso denegado: El panel del supervisor es de SOLO LECTURA.");return;}// REGLA 3: Bloqueo de seguridad para evitar desmarcar celdas hechasconst yaHecho = registros.some(r => r.auxiliar === auxiliar && r.area === area && r.actividad === actividad);if (yaHecho) {alert("Acceso denegado: No puedes desmarcar actividades que ya fueron realizadas.");return;}// Guardar el registro directamente en la base de datos en la nubeconst { error } = await supabase.from('registros_tienda').insert([{ auxiliar, area, actividad }]);if (error) {alert("Error al guardar en el servidor de internet.");} else {await descargarDatosCloud(); // Recargar datos para que se sincronice con internet}}function descargarCSV(nombre, filas) {let csv = "data:text/csv;charset=utf-8,\uFEFF";filas.forEach(f => { csv += f.map(c => "${c}").join(",") + "\r\n"; });const uri = encodeURI(csv);const link = document.createElement("a"); link.setAttribute("href", uri); link.setAttribute("download", nombre);document.body.appendChild(link); link.click(); document.body.removeChild(link);}function exportarExcelActual() {if (registros.length === 0) return alert("No hay registros en la semana actual.");const filas = [["Auxiliar", "Área", "Actividad"]];registros.forEach(r => filas.push([r.auxiliar, r.area, r.actividad]));descargarCSV("Reporte_Actual_" + new Date().toLocaleDateString() + ".csv", filas);}function exportarHistorico(id) {const inf = informesSemanales.find(i => i.id === id);if (!inf) return;const filas = [["Auxiliar", "Área", "Actividad"]];inf.datos_json.forEach(r => filas.push([r.auxiliar, r.area, r.actividad]));descargarCSV("Reporte_Cierre_" + inf.fecha_cierre + ".csv", filas);}function renderizar() {verificarReinicioLunes();const pSup = document.getElementById('panel-supervisor');const pAux = document.getElementById('panel-auxiliar');if (usuarioLogueado === "Supervisor") {if (pSup) pSup.style.display = "block";if (pAux) pAux.style.display = "none";let htmlSupGrid = "";auxiliares.forEach(aux => {const real = registros.filter(r => r.auxiliar === aux.nombre).length;const tot = aux.areas.length * actividades.length;const porc = tot > 0 ? Math.round((real / tot) * 100) : 0;htmlSupGrid += <div style="background:#f8fafc; padding:12px; border-radius:12px; border:1px solid #e2e8f0;"> <div style="display:flex; justify-content:space-between; font-size:12px; font-weight:bold;"><span>👤 ${aux.nombre}</span><span>${porc}%</span></div> <div class="barra-bg"><div class="barra-fill" style="width:${porc}%;"></div></div> <p style="font-size:11px; color:#64748b; margin-top:4px;">Completadas: ${real} de ${tot}</p> </div>;});const gridProgreso = document.getElementById('sup-grid-progreso');if (gridProgreso) gridProgreso.innerHTML = htmlSupGrid;const cHist = document.getElementById('sup-contenedor-historial');if (cHist) {if (informesSemanales.length === 0) {cHist.innerHTML = <p style="color:#94a3b8; font-size:12px; text-align:center; padding:10px;">No hay reportes archivados todavía.</p>;} else {cHist.innerHTML = informesSemanales.map(inf => <div class="historial-row"> <span>📅 Cierre Semana: <strong>${inf.fecha_cierre}</strong></span> <button onclick="exportarHistorico(${inf.id})" class="btn btn-gray" style="padding:4px 8px; font-size:11px;">Excel 📥</button> </div>).join('');}}} else {if (pSup) pSup.style.display = "none";if (pAux) pAux.style.display = "block";const auxData = auxiliares.find(a => a.nombre === usuarioLogueado);if (auxData) {const real = registros.filter(r => r.auxiliar === usuarioLogueado).length;const tot = auxData.areas.length * actividades.length;const porc = tot > 0 ? Math.round((real / tot) * 100) : 0;const txtAvance = document.getElementById('aux-txt-avance');const txtPorc = document.getElementById('aux-txt-porc');const barraFill = document.getElementById('aux-barra-fill');if (txtAvance) txtAvance.innerText = real + " / " + tot + " Tareas";if (txtPorc) txtPorc.innerText = porc + "%";if (barraFill) barraFill.style.width = porc + "%";}}const cTablas = document.getElementById('contenedor-tablas');if (cTablas) {cTablas.innerHTML = "";auxiliares.forEach(aux => {if (usuarioLogueado !== "Supervisor" && usuarioLogueado !== aux.nombre) return;let htmlTabla = <div class="tabla-bloque"> <div class="tabla-head"> <span>📋 Matriz de Actividades: ${aux.nombre}</span> </div> <div class="tabla-scroll"><table> <thead><tr><th class="td-area">Área</th>;actividades.forEach(act => { htmlTabla += <th>${act}</th>; });htmlTabla += </tr></thead><tbody>;aux.areas.forEach(area => {htmlTabla += <tr><td class="td-area">${area}</td>;actividades.forEach(act => {const hecho = registros.some(r => r.auxiliar === aux.nombre && r.area === area && r.actividad === act);// Ajustes visuales de botones según el Rol para cumplir las Reglas de negociolet claseBtn = "btn-check btn-pendiente";if (hecho) {claseBtn = "btn-check btn-hecho";} else if (usuarioLogueado === "Supervisor") {claseBtn = "btn-check btn-pendiente btn-solo-lectura";}htmlTabla += <td> <button onclick="marcarActividad('${aux.nombre}', '${area}', '${act}')" class="${claseBtn}">${hecho ? '✓' : '+'}</button> </td>;});htmlTabla += </tr>;});htmlTabla += </tbody></table></div></div>;cTablas.innerHTML += htmlTabla;});}}window.onload = function() {const select = document.getElementById('login-usuario');if (select) {select.addEventListener('change', evaluarRolLogin);}renderizar();};
