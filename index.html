@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sistema Control Tienda Cloud</title>
-  <!-- Cargamos la librería oficial de Supabase para conectar la app a internet -->
   <script src="https://jsdelivr.net"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
@@ -48,15 +47,16 @@
     <h2 style="font-size: 22px; font-weight: 800; color: #1e293b;">Acceso a la Tienda</h2>
     <p style="color: #64748b; font-size: 13px; margin-top: 4px;">Selecciona tu perfil de trabajo</p>
     
-    <select id="login-usuario" onchange="evaluarRolLogin()" class="select-input">
+    <select id="login-usuario" class="select-input">
+      <option value="Supervisor">👔 Supervisor General</option>
       <option value="Auxiliar 1">👤 Auxiliar 1</option>
       <option value="Auxiliar 2">👤 Auxiliar 2</option>
       <option value="Auxiliar 3">👤 Auxiliar 3</option>
       <option value="Auxiliar 4">👤 Auxiliar 4</option>
-      <option value="Supervisor">👔 Supervisor General</option>
     </select>
 
-    <div id="box-password" class="hidden">
+    <!-- Ponemos la casilla visible de entrada ya que Supervisor es la primera opción -->
+    <div id="box-password">
       <input type="password" id="login-pass" placeholder="Contraseña de Supervisor" class="text-input">
     </div>
 
@@ -76,7 +76,7 @@
     </div>
 
     <!-- PANEL DEL SUPERVISOR -->
-    <div id="panel-supervisor" class="space-y-6 hidden" style="display: flex; flex-direction: column; gap: 20px;">
+    <div id="panel-supervisor" class="space-y-6" style="display: none; flex-direction: column; gap: 20px;">
       <div class="tarjeta" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
         <div>
           <h2 style="font-size: 18px; font-weight: bold;">Consola del Supervisor General</h2>
@@ -99,7 +99,7 @@
     </div>
 
     <!-- PANEL DEL AUXILIAR -->
-    <div id="panel-auxiliar" class="tarjeta hidden" style="background: linear-gradient(135deg, #1e3a8a, #1e40af); color: white;">
+    <div id="panel-auxiliar" class="tarjeta" style="display: none; background: linear-gradient(135deg, #1e3a8a, #1e40af); color: white;">
       <div style="display: flex; justify-content: space-between; align-items: center;">
         <div>
           <p style="font-size: 12px; color: #bfdbfe; font-weight: bold;">MI PROGRESO INDIVIDUAL</p>
@@ -121,12 +121,10 @@
   </div>
 
   <script>
-    // URL fija de tu proyecto Supabase extraída de la foto
     const SUPABASE_URL = "https://supabase.co";
-    // REEMPLAZA las siguientes letras por la clave Anon Key larga que copiaste en el Paso 1
-    const SUPABASE_ANON_KEY = "sb_publishable_TRw3PViir6aoMw6ZY_oygQ_DChbJJ1_";
+    // Colocamos directamente tu llave Anon Key pública real de Supabase
+    const SUPABASE_ANON_KEY = "sb_publishable_TRw3PV1ir6aoMw6ZY_oygQ_DchbJMmOunL9tE8oZ_fO82K0nclH_QhHh5Oid3v_RskrW4BqG6-p0v70f_D";
 
-    // Conectamos la app formalmente con la librería en internet
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     const auxiliares = [
@@ -139,18 +137,18 @@
     const actividades = ["Inventario", "Limpieza", "Etiquetado", "Surtido"];
     const CLAVE_SUPERVISOR = "1234";
 
-       let registros = [];
+    let registros = [];
     let informesSemanales = [];
     let usuarioLogueado = null;
 
     async function descargarDatosCloud() {
       try {
-        let { data: regCloud, error: e1 } = await supabase.from('registros_tienda').select('*');
-        if (!e1 && regCloud) registros = regCloud;
+        let { data: regCloud } = await supabase.from('registros_tienda').select('*');
+        if (regCloud) registros = regCloud;
 
-        let { data: infCloud, error: e2 } = await supabase.from('informes_semanales').select('*').order('id', { ascending: false });
-        if (!e2 && infCloud) informesSemanales = infCloud;
-      } catch (e) { console.error("Error descargando datos del servidor", e); }
+        let { data: infCloud } = await supabase.from('informes_semanales').select('*').order('id', { ascending: false });
+        if (infCloud) informesSemanales = infCloud;
+      } catch (e) { console.error(e); }
       renderizar();
     }
 
@@ -158,17 +156,9 @@
       const usuario = document.getElementById('login-usuario').value;
       const boxPass = document.getElementById('box-password');
       if (boxPass) {
-        if (usuario === "Supervisor") {
-          boxPass.classList.remove('hidden');
-        } else {
-          boxPass.classList.add('hidden');
-        }
+        if (usuario === "Supervisor") boxPass.style.display = "block";
+        else boxPass.style.display = "none";
       }
-    }
-
-      const boxPass = document.getElementById('box-password');
-      if (usuario === "Supervisor") boxPass.classList.remove('hidden');
-      else boxPass.classList.add('hidden');
     }
 
     async function ingresarSistema() {
@@ -183,7 +173,6 @@
       document.getElementById('txt-usuario-nav').innerText = usuarioLogueado === "Supervisor" ? "👔 Supervisor" : "👤 " + usuarioLogueado;
       document.getElementById('login-pass').value = "";
       
-      // Sincronizar datos con la nube antes de pintar la pantalla
       await descargarDatosCloud();
     }
 
@@ -191,29 +180,14 @@
       usuarioLogueado = null;
       document.getElementById('view-app').classList.add('hidden');
       document.getElementById('view-login').classList.remove('hidden');
+      evaluarRolLogin();
     }
 
     async function verificarReinicioLunes() {
-    function evaluarRolLogin() {
-      const usuario = document.getElementById('login-usuario').value;
-      const boxPass = document.getElementById('box-password');
-      if (boxPass) {
-        if (usuario === "Supervisor") {
-          boxPass.classList.remove('hidden');
-        } else {
-          boxPass.classList.add('hidden');
-        }
-      }
-    }
+      const hoy = new Date();
+      if (hoy.getDay() === 1) {
+        const ultReinicio = localStorage.getItem('t_cloud_reinicio_v5');
+        const hoyTexto = hoy.toLocaleDateString();
 
-    window.onload = function() {
-      const select = document.getElementById('login-usuario');
-      if (select) {
-        select.addEventListener('change', evaluarRolLogin);
-      }
-      evaluarRolLogin();
-      renderizar();
-    };
-</script>
-</body>
-</html>
+        if (ultReinicio !== hoyTexto && registros.length > 0) {
+await supabase.from('informes_semanales').insert([{ fecha_cierre: hoyTexto, datos_json: registros }]);await supabase.from('registros_tienda').delete().neq('id', 0);localStorage.setItem('t_cloud_reinicio_v5', hoyTexto);await descargarDatosCloud();}}}async function marcarActividad(auxiliar, area, actividad) {if (usuarioLogueado === "Supervisor") return alert("Acceso denegado: El panel del supervisor es de SOLO LECTURA.");const yaHecho = registros.some(r => r.auxiliar === auxiliar && r.area === area && r.actividad === actividad);if (yaHecho) return alert("Acceso denegado: No puedes desmarcar actividades ya realizadas.");const { error } = await supabase.from('registros_tienda').insert([{ auxiliar, area, actividad }]);if (!error) await descargarDatosCloud();}function descargarCSV(nombre, filas) {let csv = "data:text/csv;charset=utf-8,\uFEFF";filas.forEach(f => { csv += f.map(c => "${c}").join(",") + "\r\n"; });const uri = encodeURI(csv);const link = document.createElement("a"); link.setAttribute("href", uri); link.setAttribute("download", nombre);document.body.appendChild(link); link.click(); document.body.removeChild(link);}function exportarExcelActual() {if (registros.length === 0) return alert("No hay registros en la semana actual.");const filas = [["Auxiliar", "Área", "Actividad"]];registros.forEach(r => filas.push([r.auxiliar, r.area, r.actividad]));descargarCSV("Reporte_Actual_" + new Date().toLocaleDateString() + ".csv", filas);}function exportarHistorico(id) {const inf = informesSemanales.find(i => i.id === id);if (!inf) return;const filas = [["Auxiliar", "Área", "Actividad"]];inf.datos_json.forEach(r => filas.push([r.auxiliar, r.area, r.actividad]));descargarCSV("Reporte_Cierre_" + inf.fecha_cierre + ".csv", filas);}function renderizar() {verificarReinicioLunes();const pSup = document.getElementById('panel-supervisor');const pAux = document.getElementById('panel-auxiliar');if (usuarioLogueado === "Supervisor") {if (pSup) pSup.style.display = "flex";if (pAux) pAux.style.display = "none";let htmlSupGrid = "";auxiliares.forEach(aux => {const real = registros.filter(r => r.auxiliar === aux.nombre).length;const tot = aux.areas.length * actividades.length;const porc = tot > 0 ? Math.round((real / tot) * 100) : 0;htmlSupGrid += <div style="background:#f8fafc; padding:12px; border-radius:12px; border:1px solid #e2e8f0;"> <div style="display:flex; justify-content:space-between; font-size:12px; font-weight:bold;"><span>👤 ${aux.nombre}</span><span>${porc}%</span></div> <div class="barra-bg"><div class="barra-fill" style="width:${porc}%;"></div></div> <p style="font-size:11px; color:#64748b; margin-top:4px;">Completadas: ${real} de ${tot}</p> </div>;});const gridProgreso = document.getElementById('sup-grid-progreso');if (gridProgreso) gridProgreso.innerHTML = htmlSupGrid;const cHist = document.getElementById('sup-contenedor-historial');if (cHist) {if (informesSemanales.length === 0) {cHist.innerHTML = <p style="color:#94a3b8; font-size:12px; text-align:center; padding:10px;">No hay reportes archivados todavía.</p>;} else {cHist.innerHTML = informesSemanales.map(inf => <div class="historial-row"> <span>📅 Cierre Semana: <strong>${inf.fecha_cierre}</strong></span> <button onclick="exportarHistorico(${inf.id})" class="btn btn-gray" style="padding:4px 8px; font-size:11px;">Excel 📥</button> </div>).join('');}}} else {if (pSup) pSup.style.display = "none";if (pAux) pAux.style.display = "block";const auxData = auxiliares.find(a => a.nombre === usuarioLogueado);if (auxData) {const real = registros.filter(r => r.auxiliar === usuarioLogueado).length;const tot = auxData.areas.length * actividades.length;const porc = tot > 0 ? Math.round((real / tot) * 100) : 0;document.getElementById('aux-txt-avance').innerText = real + " / " + tot + " Tareas";document.getElementById('aux-txt-porc').innerText = porc + "%";document.getElementById('aux-barra-fill').style.width = porc + "%";}}const cTablas = document.getElementById('contenedor-tablas');if (cTablas) {cTablas.innerHTML = "";auxiliares.forEach(aux => {if (usuarioLogueado !== "Supervisor" && usuarioLogueado !== aux.nombre) return;let htmlTabla = <div class="tabla-bloque"> <div class="tabla-head"><span>📋 Matriz de Actividades: ${aux.nombre}</span></div> <div class="tabla-scroll"><table> <thead><tr><th class="td-area">Área</th>;actividades.forEach(act => { htmlTabla += <th>${act}</th>; });htmlTabla += </tr></thead><tbody>;aux.areas.forEach(area => {htmlTabla += <tr><td class="td-area">${area}</td>;actividades.forEach(act => {const hecho = registros.some(r => r.auxiliar === aux.nombre && r.area === area && r.actividad === act);let claseBtn = hecho ? "btn-check btn-hecho" : (usuarioLogueado === "Supervisor" ? "btn-check btn-pendiente btn-solo-lectura" : "btn-check btn-pendiente");htmlTabla += <td> <button onclick="marcarActividad('${aux.nombre}', '${area}', '${act}')" class="${claseBtn}">${hecho ? '✓' : '+'}</button> </td>;});htmlTabla += </tr>;});htmlTabla += </tbody></table></div></div>;cTablas.innerHTML += htmlTabla;});}}window.onload = function() {const select = document.getElementById('login-usuario');if (select) select.addEventListener('change', evaluarRolLogin);evaluarRolLogin();}
