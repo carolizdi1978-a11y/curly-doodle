@@ -151,3 +151,64 @@
     function renderizar() {
       verificarReinicioLunes();
 const pSup = document.getElementById('panel-supervisor'), pAux = document.getElementById('panel-auxiliar');if (usuarioLogueado === "Supervisor") {if (pSup) pSup.style.display = "flex"; if (pAux) pAux.style.display = "none";let hG = ""; auxiliares.forEach(aux => {const r = registros.filter(rg => rg.auxiliar === aux.nombre).length, t = aux.areas.length * actividades.length, p = t > 0 ? Math.round((r / t) * 100) : 0;hG += <div style="background:#f8fafc; padding:12px; border-radius:12px; border:1px solid #e2e8f0;"><strong>👤 ${aux.nombre} (${p}%)</strong><div class="barra-bg"><div class="barra-fill" style="width:${p}%;"></div></div></div>;});document.getElementById('sup-grid-progreso').innerHTML = hG;const cH = document.getElementById('sup-contenedor-historial');if (cH) cH.innerHTML = informesSemanales.length === 0 ? "Sin reportes." : informesSemanales.map(inf => <div class="historial-row"><span>📅 Cierre: ${inf.fecha_cierre}</span><button onclick="exportarHistorico(${inf.id})" class="btn btn-gray" style="padding:4px 8px; font-size:11px;">Excel</button></div>).join('');} else {if (pSup) pSup.style.display = "none"; if (pAux) pAux.style.display = "block";const aD = auxiliares.find(a => a.nombre === usuarioLogueado);if (aD) {const r = registros.filter(rg => rg.auxiliar === usuarioLogueado).length, t = aD.areas.length * actividades.length, p = t > 0 ? Math.round((r / t) * 100) : 0;document.getElementById('aux-txt-avance').innerText = r + " / " + t; document.getElementById('aux-txt-porc').innerText = p + "%"; document.getElementById('aux-barra-fill').style.width = p + "%";}}const cT = document.getElementById('contenedor-tablas');if (cT) {cT.innerHTML = "";auxiliares.forEach(aux => {if (usuarioLogueado !== "Supervisor" && usuarioLogueado !== aux.nombre) return;let hT = <div class="tabla-bloque"><div class="tabla-head"><span>📋 Matriz: ${aux.nombre}</span></div><div class="tabla-scroll"><table><thead><tr><th class="td-area">Área</th>;actividades.forEach(act => { hT += <th>${act}</th>; }); hT += </tr></thead><tbody>;aux.areas.forEach(ar => {hT += <tr><td class="td-area">${ar}</td>;actividades.forEach(ac => {const h = registros.some(r => r.auxiliar === aux.nombre && r.area === ar && r.actividad === ac);let cB = h ? "btn-check btn-hecho" : (usuarioLogueado === "Supervisor" ? "btn-check btn-pendiente btn-solo-lectura" : "btn-check btn-pendiente");hT += <td><button onclick="marcarActividad('${aux.nombre}', '${ar}', '${ac}')" class="${cB}">${h ? '✓' : '+'}</button></td>;}); hT += </tr>;}); cT.innerHTML += hT + </tbody></table></div></div>;});}}window.onload = function() { renderizar(); }
+    function descargarCSV(n, filas) {
+      let csv = "data:text/csv;charset=utf-8,\uFEFF"; 
+      filas.forEach(f => { csv += f.map(c => `"${c}"`).join(",") + "\r\n"; });
+      const link = document.createElement("a"); link.setAttribute("href", encodeURI(csv)); link.setAttribute("download", n);
+      document.body.appendChild(link); link.click(); document.body.removeChild(link);
+    }
+
+    function exportarExcelActual() {
+      if (registros.length === 0) return alert("No hay registros.");
+      const f = [["Auxiliar", "Área", "Actividad"]]; registros.forEach(r => f.push([r.auxiliar, r.area, r.actividad]));
+      descargarCSV("Reporte_Actual_" + new Date().toLocaleDateString() + ".csv", f);
+    }
+
+    function exportarHistorico(id) {
+      const inf = informesSemanales.find(i => i.id === id); if (!inf) return;
+      const f = [["Auxiliar", "Área", "Actividad"]]; inf.datos_json.forEach(r => f.push([r.auxiliar, r.area, r.actividad]));
+      descargarCSV("Reporte_Cierre_" + inf.fecha_cierre + ".csv", f);
+    }
+
+    function renderizar() {
+      verificarReinicioLunes();
+      const pSup = document.getElementById('panel-supervisor'), pAux = document.getElementById('panel-auxiliar');
+      if (usuarioLogueado === "Supervisor") {
+        if (pSup) pSup.style.display = "flex"; if (pAux) pAux.style.display = "none";
+        let hG = ""; auxiliares.forEach(aux => {
+          const r = registros.filter(rg => rg.auxiliar === aux.nombre).length, t = aux.areas.length * actividades.length, p = t > 0 ? Math.round((r / t) * 100) : 0;
+          hG += `<div style="background:#f8fafc; padding:12px; border-radius:12px; border:1px solid #e2e8f0;"><strong>👤 ${aux.nombre} (${p}%)</strong><div class="barra-bg"><div class="barra-fill" style="width:${p}%;"></div></div></div>`;
+        });
+        document.getElementById('sup-grid-progreso').innerHTML = hG;
+        const cH = document.getElementById('sup-contenedor-historial');
+        if (cH) cH.innerHTML = informesSemanales.length === 0 ? "<p style='color:#94a3b8; font-size:12px; padding:10px;'>Sin reportes.</p>" : informesSemanales.map(inf => `<div class="historial-row"><span>📅 Cierre: ${inf.fecha_cierre}</span><button onclick="exportarHistorico(${inf.id})" class="btn btn-gray" style="padding:4px 8px; font-size:11px;">Excel</button></div>`).join('');
+      } else {
+        if (pSup) pSup.style.display = "none"; if (pAux) pAux.style.display = "block";
+        const aD = auxiliares.find(a => a.nombre === usuarioLogueado);
+        if (aD) {
+          const r = registros.filter(rg => rg.auxiliar === usuarioLogueado).length, t = aD.areas.length * actividades.length, p = t > 0 ? Math.round((r / t) * 100) : 0;
+          document.getElementById('aux-txt-avance').innerText = r + " / " + t; document.getElementById('aux-txt-porc').innerText = p + "%"; document.getElementById('aux-barra-fill').style.width = p + "%";
+        }
+      }
+      const cT = document.getElementById('contenedor-tablas');
+      if (cT) {
+        cT.innerHTML = "";
+        auxiliares.forEach(aux => {
+          if (usuarioLogueado !== "Supervisor" && usuarioLogueado !== aux.nombre) return;
+          let hT = `<div class="tabla-bloque"><div class="tabla-head"><span>📋 Matriz: ${aux.nombre}</span></div><div class="tabla-scroll"><table><thead><tr><th class="td-area">Área</th>`;
+          actividades.forEach(act => { hT += `<th>${act}</th>`; }); hT += `</tr></thead><tbody>`;
+          aux.areas.forEach(ar => {
+            hT += `<tr><td class="td-area">${ar}</td>`;
+            actividades.forEach(ac => {
+              const h = registros.some(r => r.auxiliar === aux.nombre && r.area === ar && r.actividad === ac);
+              let cB = h ? "btn-check btn-hecho" : (usuarioLogueado === "Supervisor" ? "btn-check btn-pendiente btn-solo-lectura" : "btn-check btn-pendiente");
+              hT += `<td><button onclick="marcarActividad('${aux.nombre}', '${ar}', '${ac}')" class="${cB}">${h ? '✓' : '+'}</button></td>`;
+            }); hT += `</tr>`;
+          }); cT.innerHTML += hT + `</tbody></table></div></div>`;
+        });
+      }
+    }
+    window.onload = function() { renderizar(); }
+  </script>
+</body>
+</html>
